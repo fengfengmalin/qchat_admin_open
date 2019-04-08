@@ -89,6 +89,14 @@ public class ApiController {
         return apiService.insertSupplier(shopName);
     }
 
+    @RequestMapping("/searchSupplier.qunar")
+    @ResponseBody
+    public JsonResultVO<?> searchSupplier(@RequestParam(value = "searchKey") String searchKey){
+        logger.info("searchSupplier start searchKey:{}", searchKey);
+        return apiService.selectSupplierByName(searchKey);
+    }
+
+
     /**
      * 判断是否有可用客服
      * @param shopId 店铺id

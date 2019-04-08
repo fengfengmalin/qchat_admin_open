@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class ApiService {
     private static final Logger logger = LoggerFactory.getLogger(ApiService.class);
@@ -43,9 +45,15 @@ public class ApiService {
         int i = shopDao.insertShop(shopName);
         logger.info("ApiService/insertShop shopName:{} result:{}", shopName, i);
         Shop shopInsert = shopDao.selectShopByName(shopName);
-        return JsonResultUtil.buildSucceedJsonResult("success");
+        return JsonResultUtil.buildSucceedJsonResult(shopInsert);
     }
 
+    public JsonResultVO selectSupplierByName(String searchKey) {
+
+        List<String> stringList = shopDao.selectShopId(searchKey);
+        logger.info("selectSupplierByName result:{}", stringList.size());
+        return JsonResultUtil.buildSucceedJsonResult(stringList);
+    }
 
 
 }

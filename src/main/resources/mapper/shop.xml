@@ -26,6 +26,10 @@
         select * from supplier where name = #{shopName} and status=1 limit 1
     </select>
 
+    <select id="selectShopId" resultType="java.lang.String">
+        select 'shop_' || id from supplier where name like CONCAT('%',#{searchKey},'%') and status=1
+    </select>
+
     <insert id="insertShop">
         insert into supplier(name) values(#{name})
     </insert>
