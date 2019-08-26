@@ -1,0 +1,547 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="SeatMapping">
+    <sql id="seat">
+        seat.id,
+        seat.qunar_name AS qunarName,
+        seat.web_name AS webName,
+        seat.nickname AS nickName,
+        seat.face_link AS faceLink,
+        seat.priority AS priority,
+        seat.supplier_id AS supplierId,
+        seat.service_status AS serviceStatus,
+        seat.max_user AS maxSessions,
+        seat.bind_wx AS bindWx
+    </sql>
+
+    <!-- insert -->
+    <insert id="saveSeat" parameterType="com.qunar.qchat.admin.model.Seat" useGeneratedKeys="true">
+        insert into seat(qunar_name,web_name,face_link,supplier_id,priority, max_user)
+        values (#{qunarName},#{webName},#{faceLink},#{supplierId},#{priority}, #{maxSessions})
+        <selectKey resultType="long" order="AFTER" keyProperty="id" >
+            SELECT currval('seat_id_seq')
+        </selectKey>
+    </insert>
+
+    <!-- update -->
+    <update id="delSeatById" parameterType="long">
+        update seat set status = 0, last_update_time = CURRENT_TIMESTAMP where id = #{seatId}
+    </update>
+
+    <update id="updateSeat" parameterType="com.qunar.qchat.admin.model.Seat" >
+        update seat
+        set
+        <if test="webName != null">web_name = #{webName}, </if>
+        <if test="faceLink != null">face_link = #{faceLink}, </if>
+        <if test="supplierId != null"> supplier_id = #{supplierId}, </if>
+        <if test="serviceStatus != null"> service_status = #{serviceStatus}, </if>
+        <if test="maxSessions != null">max_user = #{maxSessions},</if>
+        <!--<if test="bindWx != null">bind_wx = #{bindWx},</if>-->
+        last_update_time = CURRENT_TIMESTAMP
+        where id = #{id} and status = 1
+    </update>
+
+    <update id="updateAfterSeatPriority" parameterType="map" >
+          update seat set priority = priority + 1 where supplier_id = #{supplierId} and priority > #{prePriority} AND seat.host = 'ejabhost2' and status = 1
+    </update>
+
+    <update id="updateSeatPriority" parameterType="map" >
+          update seat set priority = #{priority},last_update_time = CURRENT_TIMESTAMP where id = #{seatId} AND seat.host = 'ejabhost2' and status = 1
+    </update>
+
+    <update id="updateSeatWxStatus" parameterType="map" >
+        update seat set bind_wx = #{bindWx},last_update_time = CURRENT_TIMESTAMP where qunar_name = #{csrName} AND seat.host = 'ejabhost2' and status = 1
+    </update>
+    <!-- select -->
+
+    <select id="getAllSeatsWithGroupBySupplierId" parameterType="map" resultType="com.qunar.qchat.admin.model.SeatAndGroup">
+        SELECT
+        <include refid="seat"/>
+        , sg.id AS groupId
+        , sg.name AS groupName
+        , sg.strategy AS strategy
+        , supplier.name as supplierName
+        , supplier.logo_url as supplierLogo
+        , supplier.ext_flag as supplierExtFlag
+        , bsm.busi_supplier_id as busiSupplierId
+        , bsm.busi_id as busiId
+        , service_status as serviceState
+        FROM seat
+        left join seat_group_mapping sgm ON sgm.seat_id=seat.id
+        left join supplier on supplier.id = seat.supplier_id
+        LEFT JOIN seat_group sg ON seat.supplier_id = sg.supplier_id and sg.id =sgm.group_id
+        left join busi_supplier_mapping bsm on bsm.supplier_id = seat.supplier_id
+        WHERE
+        bsm.supplier_id = #{supplierId}
+        AND seat.host = 'ejabhost2'
+        and seat.status = 1
+    </select>
+
+
+    <select id="getAllSeatsWithGroup" parameterType="map" resultType="com.qunar.qchat.admin.model.SeatAndGroup">
+        SELECT
+        <include refid="seat"/>
+        , sg.id AS groupId
+        , sg.name AS groupName
+        , sg.strategy AS strategy
+        , supplier.name as supplierName
+        , supplier.logo_url as supplierLogo
+        , supplier.ext_flag as supplierExtFlag
+        , bsm.busi_supplier_id as busiSupplierId
+        , bsm.busi_id as busiId
+        , service_status as serviceState
+        FROM seat
+        left join seat_group_mapping sgm ON sgm.seat_id=seat.id
+        left join supplier on supplier.id = seat.supplier_id
+        LEFT JOIN seat_group sg ON seat.supplier_id = sg.supplier_id and sg.id =sgm.group_id
+        left join busi_supplier_mapping bsm on bsm.supplier_id = seat.supplier_id
+        WHERE
+        bsm.busi_supplier_id = #{busiSupplierId}
+        AND bsm.busi_id = #{businessId}
+        AND seat.host = 'ejabhost2'
+        and seat.status = 1
+    </select>
+
+
+    <select id="getSeatListWithoutGroup" parameterType="map" resultType="com.qunar.qchat.admin.model.SeatAndGroup">
+        SELECT
+        <include refid="seat"/>
+        , supplier.id as supplierId
+        , supplier.name as supplierName
+        , supplier.logo_url as supplierLogo
+        , supplier.ext_flag as supplierExtFlag
+        , service_status as serviceState
+        FROM seat, busi_supplier_mapping bsum, busi_seat_mapping bsem, supplier
+        WHERE
+        bsum.busi_supplier_id = #{busiSupplierId} AND bsum.busi_id = #{businessId} AND bsum.supplier_id = seat.supplier_id
+        AND seat.id = bsem.seat_id AND bsem.busi_id = #{businessId} and seat.supplier_id = supplier.id AND seat.host = 'ejabhost2' AND seat.status = 1
+    </select>
+
+    <select id="getSeatListByGroup" parameterType="map" resultType="com.qunar.qchat.admin.model.SeatAndGroup">
+        SELECT
+        <include refid="seat"/>
+        , sg.id AS groupId,sg.name AS groupName
+        , sg.strategy AS strategy
+        , supplier.name as supplierName
+        , supplier.logo_url as supplierLogo
+        , supplier.ext_flag as supplierExtFlag
+        , service_status as serviceState
+        FROM busi_supplier_mapping bsum
+        LEFT JOIN seat_group sg ON bsum.supplier_id = sg.supplier_id
+        LEFT JOIN busi_seat_group_mapping bsgm ON sg.id=bsgm.group_id
+        LEFT JOIN seat_group_mapping sgm ON sg.id=sgm.group_id
+        LEFT JOIN seat ON sgm.seat_id=seat.id
+        LEFT JOIN supplier on seat.supplier_id=supplier.id
+        WHERE
+        bsum.busi_supplier_id = #{busiSupplierId} AND bsum.busi_id = #{businessId}
+        AND bsgm.busi_id = #{businessId} and sg.supplier_id = bsum.supplier_id and seat.supplier_id = bsum.supplier_id AND seat.host = 'ejabhost2' and seat.status = 1
+    </select>
+
+    <select id="getSeatsByBuSuIdAndType" parameterType="map" resultType="com.qunar.qchat.admin.model.SeatAndBuSupplier">
+        select s.id seatId, s.qunar_name seatName, bsm.busi_id bType, bsm.busi_supplier_id bSuId, bsm.bsuid_and_type bSuIdAndTypeId,
+        bsm.supplier_id as supplierId, supplier.name as supplierName, supplier.logo_url as supplierLogo
+        from busi_supplier_mapping bsm, seat s, supplier
+        where bsm.supplier_id = s.supplier_id and supplier.id = s.supplier_id and s.host = 'ejabhost2' and s.status = 1
+        <if test="bSuIdAndTypeList != null and bSuIdAndTypeList.size() > 0">
+            and bsm.bsuid_and_type in
+            <foreach collection="bSuIdAndTypeList" open="(" close=")" separator="," item="bSuIdAndType">
+                #{bSuIdAndType}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="getSeatByQunarName" parameterType="String" resultType="com.qunar.qchat.admin.model.Seat">
+        select
+        <include refid="seat"/>
+        ,s.name as supplierName, seat.service_status as serviceStatus,b.id as businessId
+        from seat,busi_seat_mapping bsem,business b,supplier s
+        where seat.id = bsem.seat_id and bsem.busi_id = b.id and seat.supplier_id = s.id AND seat.host = 'ejabhost2' and lower(seat.qunar_name) = #{qunarName} and seat.status = 1
+    </select>
+
+    <select id="getSeatListBySupplierId" parameterType="long" resultType="com.qunar.qchat.admin.model.Seat">
+        select
+        <include refid="seat"/>
+        ,seat.service_status as serviceStatus
+        from seat
+        where supplier_id = #{supplierId} AND host = 'ejabhost2' and status = 1
+    </select>
+
+    <select id="getAllSeatServiceStatusList" resultType="com.qunar.qchat.admin.model.Seat">
+        select id, qunar_name as qunarName, service_status as serviceStatus
+        from seat
+        where  host = 'ejabhost2' AND status = 1
+    </select>
+
+    <select id="getSeatNameListByBusiType" parameterType="map" resultType="String">
+        select string_agg(qunar_name,',')
+        from seat s,busi_seat_mapping bsm
+        where bsm.busi_id = #{busiType} and s.id = bsm.seat_id AND s.host = 'ejabhost2' and s.status = 1
+    </select>
+
+    <select id="getSeatNameListByBSuIds" parameterType="map" resultType="String">
+        select string_agg(qunar_name,',') from seat s,busi_supplier_mapping bbm
+        where bbm.busi_id = #{busiType} and s.supplier_id = bbm.supplier_id AND s.host = 'ejabhost2' and s.status = 1
+        <if test="supplierIds != null and supplierIds.size() > 0">
+            and bbm.busi_supplier_id in
+            <foreach collection="supplierIds" open="(" close=")" separator="," item="supplierId">
+                #{supplierId}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="getSeatNameListBySuIds" parameterType="map" resultType="String">
+        select string_agg(qunar_name,',') from seat s
+        where s.host = 'ejabhost2'AND s.status = 1
+        <if test="suIdList != null and suIdList.size() > 0">
+            and supplier_id in
+            <foreach collection="suIdList" open="(" close=")" separator="," item="supplierId">
+                #{supplierId}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="getAllSeatNameListBySuIds" parameterType="map" resultType="String">
+        select string_agg(qunar_name,',') from seat s
+        where s.host = 'ejabhost2'
+        <if test="suIdList != null and suIdList.size() > 0">
+            AND supplier_id in
+            <foreach collection="suIdList" open="(" close=")" separator="," item="supplierId">
+                #{supplierId}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="getSeatNameStrBySupplierId" parameterType="map" resultType="String">
+        select string_agg(qunar_name,',') from seat s
+        where s.supplier_id = #{supplierId} AND s.host = 'ejabhost2' and s.status = 1
+    </select>
+
+    <select id="getSeatListBySupplierName" parameterType="String" resultType="com.qunar.qchat.admin.model.Seat">
+        select
+            se.id,
+            se.qunar_name AS qunarName,
+            se.nickname AS nickName,
+            se.web_name AS webName,
+            se.face_link AS faceLink,
+            se.priority,
+            se.supplier_id AS supplierId,
+            se.service_status as serviceStatus
+        from supplier su,seat se
+        where su.name = #{supplierName} and su.id = se.supplier_id AND se.host = 'ejabhost2' and se.status = 1
+    </select>
+    
+    <select id="getSeatListByQunarNames" parameterType="list" resultType="com.qunar.qchat.admin.model.Seat">
+        SELECT <include refid="seat"/>
+        , supplier.name AS supplierName
+        FROM seat,supplier
+        WHERE
+        seat.host = 'ejabhost2' and seat.status = 1
+        <if test="list != null and list.size() > 0">
+            AND lower(seat.qunar_name) in
+            <foreach collection="list" open="(" close=")" separator="," item="qunarName">
+                #{qunarName}
+            </foreach>
+            AND seat.supplier_id = supplier.id
+        </if>
+    </select>
+
+    <select id="getSeatListByPid" parameterType="list" resultType="com.qunar.qchat.admin.model.Seat">
+        SELECT s.id, s.qunar_name as qunarName, s.supplier_id as supplierId, gpm.pid
+        FROM group_product_mapping gpm
+        INNER JOIN seat_group_mapping sgm on gpm.group_id = sgm.group_id
+        INNER JOIN seat s on sgm.seat_id = s.id
+        WHERE s.host = 'ejabhost2' and s.status = 1 and gpm.pid in
+        <if test="list != null and list.size() > 0">
+            <foreach collection="list" open="(" close=")" separator="," item="pid">
+                #{pid}
+            </foreach>
+        </if>
+    </select>
+
+    <update id="updateSeatByQunarName" parameterType="map">
+        UPDATE seat
+        SET
+        <if test="webName != null">
+            web_name = #{webName},
+        </if>
+        last_update_time = CURRENT_TIMESTAMP
+        WHERE
+        lower(qunar_name) = #{qunarName} AND host = 'ejabhost2' and status = 1
+    </update>
+
+    <sql id="pageQuerySeatListSQL">
+        <if test = "suIdList != null and suIdList.size > 0">
+            seat.supplier_id IN
+            <foreach collection="suIdList" open="(" close=")" separator="," item="suId">
+                #{suId}
+            </foreach>
+             AND
+        </if>
+
+        <if test="webName != null">
+            seat.web_name = #{webName} AND
+        </if>
+        <if test="qunarName != null">
+            seat.qunar_name = #{qunarName} AND
+        </if>
+        <!--
+        <if test="busiId >= 0">
+            EXISTS (select 1 from busi_seat_mapping bsem where seat.id = bsem.seat_id and bsem.busi_id = #{busiId}) AND
+        </if> -->
+          seat.status = 1 AND
+    </sql>
+
+    <select id="pageQuerySeatList" parameterType="map" resultType="com.qunar.qchat.admin.model.Seat">
+        SELECT
+        <include refid="seat"/>
+        ,seat.create_time AS createTime, su.id AS supplierId, su.name AS supplierName, seat.host AS host
+        FROM seat, supplier su
+        WHERE
+        <include refid="pageQuerySeatListSQL"/>
+        seat.supplier_id = su.id
+        <if test="sort == null">
+            ORDER BY seat.create_time DESC
+        </if>
+        <if test="sort != null and sort == 'priority'">
+            ORDER BY priority ASC
+        </if>
+        limit #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="pageQuerySeatListCount" parameterType="map" resultType="long">
+        SELECT
+          count(1)
+        FROM seat
+        WHERE
+          <include refid="pageQuerySeatListSQL"/>
+          1 = 1
+    </select>
+
+    <select id="getGroupAndBusiListBySeatId" parameterType="list" resultType="SeatGroupBusiMapping">
+        select sgm.group_id as groupId,sgm.seat_id as seatId,bsgm.busi_id as busiId,sg.name as groupName from seat_group_mapping sgm
+        left join busi_seat_group_mapping bsgm on sgm.group_id = bsgm.group_id
+        left join seat_group sg on sgm.group_id = sg.id
+        left join seat s on s.id = sgm.seat_id
+        WHERE
+        s.host = 'ejabhost2' and s.status = 1
+        <if test="list != null and list.size() > 0">
+            and sgm.seat_id IN
+            <foreach collection="list" open="(" close=")" separator="," item="seatId">
+                #{seatId}
+            </foreach>
+        </if>
+
+        <if test="list == null or list.size() == 0">
+            and 1 = 0
+        </if>
+    </select>
+
+    <select id="getSeatBusiListBySeatId" parameterType="list" resultType="BusiSeatMapping">
+        SELECT bsm.busi_id AS busiId,bsm.seat_id AS seatId,bu.name AS busiName
+        FROM busi_seat_mapping bsm,business bu, seat s
+        WHERE
+        s.id = bsm.seat_id AND s.host = 'ejabhost2' and s.status = 1
+        <if test="list != null and list.size() > 0">
+            and bsm.seat_id IN
+            <foreach collection="list" open="(" close=")" separator="," item="seatId">
+                #{seatId}
+            </foreach>
+            AND bu.id = bsm.busi_id
+        </if>
+
+        <if test="list == null or list.size() == 0">
+            and 1 = 0
+        </if>
+    </select>
+
+    <select id="getSeatListByGroupId" parameterType="map" resultType="SeatAndGroup">
+        SELECT busi_id AS busiId,seat_id AS seatId
+        FROM busi_seat_mapping bsm, seat s
+        WHERE
+        s.id = bsm.seat_id AND s.host = 'ejabhost2' and s.status = 1
+        <if test="list != null and list.size() > 0">
+            and bsm.seat_id IN
+            <foreach collection="list" open="(" close=")" separator="," item="seatId">
+                #{seatId}
+            </foreach>
+        </if>
+
+        <if test="list == null or list.size() == 0">
+            and 1 = 0
+        </if>
+    </select>
+
+    <select id="getSeatListByGroupIds" parameterType="map" resultType="com.qunar.qchat.admin.model.SeatAndGroup">
+        SELECT
+          <include refid="seat"/>
+          , sg.id AS groupId,sg.name AS groupName
+          ,sg.strategy AS strategy
+           ,service_status as serviceState
+        FROM
+          seat,
+          seat_group_mapping sgm,
+          seat_group sg,
+          busi_seat_mapping bsm
+        WHERE
+            seat.status = 1
+            <if test="groupList != null and groupList.size() > 0">
+                AND sg.id IN
+                <foreach collection="groupList" open="(" close=")" separator="," item="groupId">
+                    #{groupId}
+                </foreach>
+            </if>
+            AND sg.id = sgm.group_id
+            AND sgm.seat_id = seat.id
+            AND bsm.seat_id = seat.id
+            AND seat.supplier_id = sg.supplier_id
+            AND seat.host = 'ejabhost2' and seat.status = 1
+            <if test="busiId > 0">
+              AND bsm.busi_id = #{busiId}
+            </if>
+    </select>
+
+    <select id="getSeatListByQunarName" parameterType="map" resultType="com.qunar.qchat.admin.model.Seat">
+        SELECT <include refid="seat"/>
+        FROM seat
+        WHERE qunar_name = #{qunarName} and status = 1
+    </select>
+
+    <select id="getSeatBySeatId" parameterType="long" resultType="com.qunar.qchat.admin.model.Seat">
+        SELECT <include refid="seat"/>
+        FROM seat
+        WHERE id = #{seatId} AND host = 'ejabhost2' and status = 1
+    </select>
+
+    <select id="getMaxSeatPriority" parameterType="map" resultType="Integer">
+        SELECT
+          max(priority)
+        FROM seat
+        WHERE
+          supplier_id = #{supplierId} AND host = 'ejabhost2' and status = 1
+    </select>
+
+    <select id="getSeatAndGroupByQName" parameterType="map" resultType="com.qunar.qchat.admin.model.SeatAndGroup">
+        SELECT
+        <include refid="seat"/>
+        , supplier.id as supplierId,
+        supplier.name as supplierName,
+        supplier.logo_url as supplierLogo,
+        supplier.ext_flag as supplierExtFlag ,
+        bsm.busi_supplier_id as busiSupplier,
+        bsm.busi_id as busiId,
+        service_status as serviceState
+        FROM seat LEFT JOIN busi_supplier_mapping bsm on seat.supplier_id=bsm.supplier_id
+        LEFT JOIN supplier on seat.supplier_id = supplier.id
+        where seat.qunar_name = #{qunarName} and seat.supplier_id = #{supplierId} AND seat.host = 'ejabhost2' and seat.status = 1
+        and bsm.status = 1 and supplier.status = 1 limit 1
+    </select>
+
+    <select id="getSeatAndGroupBySupplierId" parameterType="map" resultType="com.qunar.qchat.admin.model.SeatAndGroup">
+        SELECT
+        <include refid="seat"/>
+        , sg.id AS groupId,
+        sg.name AS groupName,
+        sg.strategy AS strategy,
+        supplier.name as supplierName,
+        supplier.logo_url as supplierLogo,
+        supplier.ext_flag as supplierExtFlag,
+        bsum.busi_supplier_id as busiSupplierId,
+        bsum.busi_id as busiId,
+        service_status as serviceState
+        FROM busi_supplier_mapping bsum
+        LEFT JOIN seat_group sg ON bsum.supplier_id = sg.supplier_id
+        LEFT JOIN busi_seat_group_mapping bsgm ON sg.id=bsgm.group_id
+        LEFT JOIN seat_group_mapping sgm ON sg.id=sgm.group_id
+        LEFT JOIN seat ON sgm.seat_id=seat.id
+        LEFT JOIN supplier on seat.supplier_id=supplier.id
+        WHERE bsum.supplier_id = #{supplierId} and sg.supplier_id = bsum.supplier_id
+        and seat.supplier_id = bsum.supplier_id AND seat.host = 'ejabhost2' and seat.status = 1
+    </select>
+
+    <select id="getSeatBySeatQNameGroup" parameterType="map" resultType="com.qunar.qchat.admin.model.SeatAndGroup">
+        SELECT
+        <include refid="seat"/>
+        , sg.id AS groupId,
+        sg.name AS groupName,
+        sg.strategy AS strategy,
+        supplier.name as supplierName,
+        supplier.logo_url as supplierLogo,
+        supplier.ext_flag as supplierExtFlag,
+        bsum.busi_supplier_id as busiSupplierId,
+        bsum.busi_id as busiId,
+        service_status as serviceState
+        FROM busi_supplier_mapping bsum
+        LEFT JOIN seat_group sg ON bsum.supplier_id = sg.supplier_id
+        LEFT JOIN busi_seat_group_mapping bsgm ON sg.id=bsgm.group_id
+        LEFT JOIN seat_group_mapping sgm ON sg.id=sgm.group_id
+        LEFT JOIN seat ON sgm.seat_id=seat.id
+        LEFT JOIN supplier on seat.supplier_id=supplier.id
+        WHERE bsum.supplier_id = #{supplierId} and sg.supplier_id = bsum.supplier_id
+        and seat.supplier_id = bsum.supplier_id and seat.status = 1
+        and sg.id in (
+            select sgm.group_id from seat LEFT JOIN seat_group_mapping sgm on seat.id=sgm.seat_id
+            where seat.supplier_id=#{supplierId} AND seat.host = 'ejabhost2' and seat.status=1 and seat.qunar_name=#{seatQName})
+    </select>
+
+    <select id="getSeatsWithoutGroupBySupplierId" parameterType="map" resultType="com.qunar.qchat.admin.model.SeatAndGroup">
+        SELECT
+        <include refid="seat"/>
+        ,supplier.id as supplierId,
+        supplier.name as supplierName,
+        supplier.logo_url as supplierLogo,
+        supplier.ext_flag as supplierExtFlag,
+        bsum.busi_supplier_id as busiSupplierId,
+        bsum.busi_id as busiId,
+        service_status as serviceState
+        FROM seat, busi_supplier_mapping bsum, busi_seat_mapping bsem, supplier
+        WHERE
+        bsum.supplier_id = #{supplierId} AND bsum.supplier_id = seat.supplier_id
+        AND seat.id = bsem.seat_id AND seat.host = 'ejabhost2' AND seat.status = 1 and seat.supplier_id = supplier.id
+    </select>
+
+    <select id="querySeatListBySupplierIds" parameterType="list" resultType="com.qunar.qchat.admin.model.Seat">
+        select
+        <include refid="seat"/>
+        ,seat.service_status as serviceStatus
+        from seat
+        where supplier_id in
+        <foreach collection="supplierIds" item="item" index="index" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        AND host = 'ejabhost2'
+        and status = 1
+    </select>
+
+    <select id="getSeatsWithGroupType" parameterType="map" resultType="com.qunar.qchat.admin.model.SeatAndGroup">
+        SELECT
+        <include refid="seat"/>
+        , sg.id AS groupId,
+        sg.name AS groupName,
+        sg.strategy AS strategy,
+        supplier.name as supplierName,
+        supplier.logo_url as supplierLogo,
+        supplier.ext_flag as supplierExtFlag,
+        service_status as serviceState
+        FROM busi_supplier_mapping bsum
+        LEFT JOIN seat_group sg ON bsum.supplier_id = sg.supplier_id
+        LEFT JOIN busi_seat_group_mapping bsgm ON sg.id=bsgm.group_id
+        LEFT JOIN seat_group_mapping sgm ON sg.id=sgm.group_id
+        LEFT JOIN seat ON sgm.seat_id=seat.id
+        LEFT JOIN supplier on seat.supplier_id=supplier.id
+        WHERE
+        bsum.busi_supplier_id = #{busiSupplierId} AND bsum.busi_id = #{businessId} and sg.group_type = #{groupType}
+        AND bsgm.busi_id = #{businessId} and sg.supplier_id = bsum.supplier_id and seat.supplier_id = bsum.supplier_id
+        AND seat.host = 'ejabhost2' and seat.status = 1
+    </select>
+
+    <select id="getBusiSupplieridBySupplierID" parameterType="map" resultType="String">
+        SELECT
+        busi_supplier_id
+        FROM busi_supplier_mapping
+        WHERE
+        supplier_id=#{supplierid} and busi_id=#{businessId}
+    </select>
+
+
+</mapper>

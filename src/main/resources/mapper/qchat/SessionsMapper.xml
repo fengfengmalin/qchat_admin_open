@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qunar.qchat.admin.dao.session.ISeatUserDao">
+
+
+
+    <update id="setSeatMaxUser">
+        UPDATE seat set max_user = #{max_user} WHERE supplier_id = #{supplier_id} and qunar_name = #{qunar_name};
+    </update>
+
+    <select id="getSeatMaxUser"  resultType="int">
+        select max_user from seat where supplier_id = #{supplier_id}  and qunar_name = #{qunar_name} and status = 1;
+    </select>
+
+
+    <select id="getExtFlag" >
+      select ext_flag from supplier where id = #{supplier_id};
+    </select>
+
+
+    <update id="setExtFlag">
+        UPDATE supplier set ext_flag = #{ext_flag} WHERE id = #{supplier_id};
+    </update>
+
+
+
+</mapper>

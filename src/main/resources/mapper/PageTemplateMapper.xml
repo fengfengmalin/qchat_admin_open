@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="PageTemplateMapping">
+
+    <insert id="savePageTemplate" parameterType="PageTemplate" useGeneratedKeys="true">
+        insert into page_template(name,page_css,page_html,busi_id)
+        values (#{name},#{pageCss},#{pageHtml},#{busiType})
+        <selectKey resultType="int" order="AFTER" keyProperty="id" >
+            SELECT currval('page_template_id_seq')
+        </selectKey>
+    </insert>
+
+
+    <update id="updatePageTemplate" parameterType="PageTemplate" >
+        update page_template
+        set
+        <if test="name != null">name = #{name}, </if>
+        <if test="pageCss != null">page_css = #{pageCss}, </if>
+        <if test="pageHtml != null">page_html = #{pageHtml}, </if>
+        last_update_time = CURRENT_TIMESTAMP
+        where id = #{id}
+    </update>
+
+    <select id="getPageTemplateById" parameterType="map" resultType="PageTemplate">
+        select
+          id,
+          name,
+          page_css as pageCss,
+          page_html as pageHtml,
+          busi_id as busiType,
+          create_time as createTime
+        from page_template
+        where id = #{id}
+    </select>
+
+    <select id="queryPageTemplateList" parameterType="map" resultType="PageTemplate">
+        select
+            id,
+            name,
+            page_css as pageCss,
+            page_html as pageHtml,
+            busi_id as busiType,
+            create_time as createTime
+        from page_template
+        where busi_id = #{busiId}
+        order by create_time desc
+    </select>
+</mapper>

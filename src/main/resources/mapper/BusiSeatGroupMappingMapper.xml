@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="BusiSeatGroupMapping">
+
+    <insert id="saveBusiSeatGroupMapping" parameterType="BusiSeatGroupMapping" useGeneratedKeys="true">
+        insert into busi_seat_group_mapping(busi_id, group_id)
+        values (#{busiId}, #{groupId})
+        <selectKey resultType="long" order="AFTER" keyProperty="id" >
+            SELECT currval('busi_seat_group_mapping_id_seq')
+        </selectKey>
+    </insert>
+
+    <delete id="delBusiSeatGroupMapping" parameterType="BusiSeatGroupMapping">
+        delete from busi_seat_group_mapping where 1 = 1
+        <if test="groupId > 0" >
+          AND group_id = #{groupId}
+        </if>
+        <if test="busiId > 0" >
+          AND busi_id = #{busiId}
+        </if>
+        <if test="busiId == 0 and groupId == 0">
+          AND 1 = 0
+        </if>
+    </delete>
+
+    <select id="getGroupBusiListByGroupId" parameterType="list" resultType="BusiSeatGroupMapping">
+        SELECT bsgm.busi_id AS busiId,bsgm.group_id AS groupId,bu.name AS busiName  FROM busi_seat_group_mapping bsgm,business bu
+        WHERE
+        <if test="list != null and list.size() > 0">
+            bsgm.group_id IN
+            <foreach collection="list" open="(" close=")" separator="," item="groupId">
+                #{groupId}
+            </foreach>
+            AND bu.id = bsgm.busi_id
+        </if>
+
+        <if test="list == null and list.size() == 0">
+            1 = 0
+        </if>
+    </select>
+</mapper>

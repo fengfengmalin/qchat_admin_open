@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="GroupMapping">
+    <sql id="group">
+        seat_group.id,
+        seat_group.name,
+        seat_group.supplier_id as supplierId
+    </sql>
+
+    <insert id="saveSeatGroup" parameterType="com.qunar.qchat.admin.model.SeatGroup" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+        insert into seat_group(name,supplier_id, default_value)
+        values (#{name},#{supplierId}, #{defaultValue})
+    </insert>
+
+    <insert id="saveGroupProductMapping" parameterType="GroupProductMapping" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        insert into group_product_mapping(group_id, pid)
+        values (#{groupId},#{pid})
+    </insert>
+
+    <update id="updateSeatGroup" parameterType="com.qunar.qchat.admin.model.SeatGroup" >
+        update seat_group
+        set
+        <if test="name != null">name = #{name}, </if>
+        <if test="supplierId != null"> supplier_id = #{supplierId}, </if>
+        <if test="defaultValue != null">default_value = #{defaultValue},</if>
+        last_update_time = CURRENT_TIMESTAMP
+        where id = #{id}
+    </update>
+
+    <select id="getGroupBySupplierAndBusi" parameterType="map" resultType="com.qunar.qchat.admin.model.SeatGroup">
+        SELECT <include refid="group"/>
+        FROM seat_group sg,busi_supplier_mapping bsm,busi_seat_group_mapping bsgm
+        WHERE bsm.busi_supplier_id = #{busiSupplierId} AND bsm.busi_id = #{businessId} AND bsm.supplier_id = sg.supplier_id
+        AND bsgm.busi_id = #{businessId} AND sg.id = bsgm.group_id
+    </select>
+
+    <sql id="pageQueryGroupListSQL">
+        <if test="supplierId > 0">
+            seat_group.supplier_id = #{supplierId} AND
+        </if>
+
+        <if test="suIdList != null and suIdList.size > 0">
+            seat_group.supplier_id in
+            <foreach collection="suIdList" open="(" close=")" separator="," item="suId">
+                #{suId}
+            </foreach>
+            AND
+        </if>
+
+        <if test="groupName != null">
+            seat_group.name = #{groupName} AND
+        </if>
+        <if test="busiId > 0">
+            EXISTS (select 1 from busi_seat_group_mapping bsgm where seat_group.id = bsgm.group_id and bsgm.busi_id = #{busiId}) AND
+        </if>
+    </sql>
+
+    <select id="pageQueryGroupList" parameterType="map" resultType="com.qunar.qchat.admin.model.SeatGroup">
+        SELECT
+            <include refid="group"/>
+            ,seat_group.create_time AS createTime, su.id AS supplierId, su.name AS supplierName, seat_group.default_value as defaultValue
+        FROM seat_group, supplier su
+        WHERE
+        <include refid="pageQueryGroupListSQL"/>
+        seat_group.supplier_id = su.id
+        ORDER BY seat_group.create_time DESC
+        limit #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="pageQueryGroupListCount" parameterType="map" resultType="int">
+        SELECT
+          count(1)
+        FROM seat_group
+        WHERE
+        <include refid="pageQueryGroupListSQL"/>
+        1 = 1
+    </select>
+
+    <select id="getGroup" parameterType="map" resultType="SeatGroup">
+        SELECT
+          <include refid="group"/>
+        FROM seat_group
+        WHERE supplier_id = #{supplierId} and name = #{groupName}
+    </select>
+
+    <select id="getGroupById" parameterType="int" resultType="SeatGroup">
+        SELECT
+          <include refid="group"/>
+        FROM seat_group
+        WHERE id = #{id}
+    </select>
+
+    <select id="getProductListByGroupId" parameterType="map" resultType="GroupProductMapping">
+        SELECT pid
+        FROM group_product_mapping
+        WHERE
+            group_id = #{groupId}
+    </select>
+
+    <select id="getProductListByGroupIds" parameterType="map" resultType="GroupProductMapping">
+        SELECT group_id AS groupId, pid
+        FROM group_product_mapping
+        WHERE
+        <if test="groupList != null and groupList.size() > 0">
+            group_id IN
+            <foreach collection="groupList" open="(" close=")" separator="," item="groupId">
+                #{groupId}
+            </foreach>
+        </if>
+        <if test="groupList == null">
+            1=0
+        </if>
+    </select>
+
+    <sql id="seat">
+        s.id,
+        s.qunar_name AS qunarName,
+        s.web_name AS webName,
+        s.nickname AS nickName,
+        s.face_link AS faceLink,
+        s.priority AS priority,
+        s.supplier_id AS supplierId
+    </sql>
+
+    <select id="getSeatAndGroupListByPid" parameterType="map" resultType="com.qunar.qchat.admin.model.SeatAndGroup">
+        SELECT
+        <include refid="seat"/>
+        , gpm.group_id AS groupId
+        FROM group_product_mapping gpm
+        LEFT JOIN seat_group_mapping sgm on gpm.group_id = sgm.group_id
+        LEFT JOIN seat s on sgm.seat_id = s.id
+        WHERE gpm.pid = #{pid} and s.status = 1
+    </select>
+
+    <delete id="delGroupById" parameterType="int">
+        delete from seat_group where id = #{groupId}
+    </delete>
+
+    <delete id="delGroupProductMappingByGroupId" parameterType="int">
+        delete from group_product_mapping where group_id = #{groupId}
+    </delete>
+</mapper>

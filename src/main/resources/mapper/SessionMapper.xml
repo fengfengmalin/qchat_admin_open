@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="SessionMapping">
+
+    <sql id="session">
+        session.id  as id,
+        session.session_id as session_id,
+        session.user_name as user_name,
+        session.seat_name as seat_name,
+        session.shop_name as shop_name,
+        session.product_id as product_id,
+        session.session_state as session_state;
+        session.isrobot_seat as isrobot_seat
+    </sql>
+    <select id="selectTargetStateSessionFromTimestame" parameterType="map" resultType="com.qunar.qchat.admin.model.Session">
+        SELECT s.id,s.user_name,s.seat_name,s.shop_name,s.isrobot_seat,s.session_state,s.session_id,s.product_id
+        FROM session as s
+        WHERE  session_state IN
+        <foreach collection="states" item="state" open="(" close=")" separator=",">
+            #{state}
+        </foreach>
+        order by update_time DESC ;
+    </select>
+    <select id="selectSessionFromTimestame" parameterType="map" resultType="com.qunar.qchat.admin.model.Session">
+        SELECT s.id,s.user_name,s.seat_name,s.shop_name,s.isrobot_seat,s.session_state,s.session_id,s.product_id
+        FROM session as s
+        WHERE update_time > #{fromtime}
+        order by update_time DESC ;
+    </select>
+
+    <select id="selectTargetStateSession" parameterType="map" resultType="com.qunar.qchat.admin.model.Session">
+        SELECT s.id,s.user_name,s.seat_name,s.shop_name,s.isrobot_seat,s.session_state,s.session_id,s.product_id
+        FROM session as s
+        WHERE session_state IN
+        <foreach collection="states" item="state" open="(" close=")" separator=",">
+            #{state}
+        </foreach>
+        order by update_time DESC ;
+    </select>
+
+    <select id="selectTargetStateAndPidSession" parameterType="map" resultType="com.qunar.qchat.admin.model.Session">
+        SELECT s.id,s.user_name,s.seat_name,s.shop_name,s.isrobot_seat,s.session_state,s.session_id,s.product_id
+        FROM session as s
+        WHERE session_state IN
+        <foreach collection="states" item="state" open="(" close=")" separator=",">
+            #{state}
+        </foreach> and
+        <if test="pid != null"> product_id != #{pid} </if>
+        <if test="pid == null"> product_id is null </if>
+        and user_name = #{userName} and shop_name = #{shopName}
+        order by update_time DESC ;
+    </select>
+
+    <select id="selectTargetStateSessionAsc" parameterType="map" resultType="com.qunar.qchat.admin.model.Session">
+        SELECT s.id,s.user_name,s.seat_name,s.shop_name,s.isrobot_seat,s.session_state,s.session_id,s.product_id
+        FROM session as s
+        WHERE session_state IN
+        <foreach collection="states" item="state" open="(" close=")" separator=",">
+            #{state}
+        </foreach>
+        order by update_time ASC ;
+    </select>
+
+    <select id="selectSessionCounts" parameterType="map" resultType="com.qunar.qchat.admin.model.SeatSessionsDetail">
+        select seat_name,count(session_id) as session_counts , max(created_time) as last_session_time  from   session  where shop_name = #{shop_name}
+        and seat_name in
+        <foreach collection="seat_ids" item="seat_id" open="(" close=")" separator=",">
+            #{seat_id}
+        </foreach>
+        and session_state in
+        <foreach collection="states" item="state" open="(" close=")" separator=",">
+            #{state}
+        </foreach>
+        group by seat_name;
+    </select>
+
+    <select id="getSession" parameterType="map" resultType="com.qunar.qchat.admin.model.Session">
+        SELECT session_id,user_name,seat_name,shop_name,product_id,session_state,isrobot_seat,created_time
+        FROM session
+        WHERE
+        <if test="userName != null"> user_name = #{userName} </if>
+        <if test="userName == null"> user_name is null </if>
+        and shop_name = #{shopName}
+        ORDER BY created_time DESC ;
+    </select>
+
+    <select id="getSessionAndPid" parameterType="map" resultType="com.qunar.qchat.admin.model.Session">
+        SELECT session_id,user_name,seat_name,shop_name,product_id,session_state,isrobot_seat,created_time
+        FROM session
+        WHERE
+        <if test="userName != null"> user_name = #{userName} </if>
+        <if test="userName == null"> user_name is null </if>
+        and shop_name = #{shopName}  and product_id = #{pid}
+        ORDER BY created_time DESC ;
+    </select>
+
+
+    <select id="getLastSession" parameterType="map" resultType="com.qunar.qchat.admin.model.Session">
+        SELECT session_id,user_name,seat_name,shop_name,product_id,session_state,isrobot_seat,created_time
+        FROM session
+        WHERE
+        <if test="userName != null"> user_name = #{userName} </if>
+        <if test="userName == null"> user_name is null </if>
+        and shop_name = #{shopName}
+        ORDER BY created_time DESC limit 1 ;
+    </select>
+
+    <select id="getSessionBySessionId" parameterType="map" resultType="com.qunar.qchat.admin.model.Session">
+        SELECT session_id,user_name,seat_name,shop_name,product_id,session_state,isrobot_seat,created_time
+        FROM session
+        WHERE session_id = #{session_id} limit 1
+    </select>
+
+    <insert id="insertSession" parameterType="com.qunar.qchat.admin.model.Session">
+        insert into session (session_id, user_name, seat_name, shop_name,product_id,session_state,isrobot_seat)
+        values (#{session_id}, #{user_name}, #{seat_name}, #{shop_name}, #{product_id}, #{session_state}, #{isrobot_seat})
+        ON CONFLICT DO NOTHING;
+    </insert>
+
+    <update id="updateSession" parameterType="com.qunar.qchat.admin.model.Session">
+        UPDATE session
+        set seat_name = #{seat_name},
+            session_state= #{session_state},
+            isrobot_seat = #{isrobot_seat},
+            update_time = now(),
+            product_id = #{product_id}
+        where session_id = #{session_id};
+    </update>
+
+    <update id="updateSessionEsPid" parameterType="com.qunar.qchat.admin.model.Session">
+        UPDATE session
+        set session_state = #{session_state}
+        where product_id != #{product_id};
+    </update>
+
+    <insert id="insertBusiSessionMapping" parameterType="map">
+        insert into busi_session_mapping (busi_session_id, session_id)
+        values (#{busi_session_id}, #{session_id})
+        ON CONFLICT DO NOTHING;
+    </insert>
+    <select id="selectSessonsOfBusiSession" parameterType="map" resultType="com.qunar.qchat.admin.model.Session">
+        SELECT <include refid="session"/>
+        FROM busi_session_mapping as bsm left join session as s on bsm.session_id = s.session_id
+        WHERE bsm.busi_session_id = #{busi_session_id}
+    </select>
+
+</mapper>

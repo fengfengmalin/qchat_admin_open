@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qunar.qtalk.ss.sift.dao.CsrDao">
+    <resultMap id="CsrMap" type="com.qunar.qtalk.ss.sift.entity.CSR">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="qunar_name" property="qunarName" jdbcType="VARCHAR"/>
+        <result column="web_name" property="webName" jdbcType="VARCHAR"/>
+        <result column="nickname" property="nickName" jdbcType="VARCHAR"/>
+        <result column="face_link" property="faceLink"  jdbcType="VARCHAR"/>
+        <result column="supplier_id" property="supplierID" jdbcType="VARCHAR"/>
+        <result column="priority" property="priority" jdbcType="VARCHAR"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="last_update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+        <result column="old_supplier_id" property="oldSupplierID" jdbcType="INTEGER"/>
+        <result column="old_id" property="oldID" jdbcType="INTEGER"/>
+        <result column="service_status" property="serviceStatus" jdbcType="INTEGER"/>
+        <result column="status" property="status" jdbcType="INTEGER"/>
+        <result column="max_user" property="maxServiceCount" jdbcType="INTEGER"/>
+        <result column="bind_wx" property="bindWx" jdbcType="INTEGER"/>
+        <result column="host" property="host" jdbcType="VARCHAR"/>
+    </resultMap>
+
+
+    <sql id="csr">
+        id,qunar_name,web_name,nickname,face_link,supplier_id,priority,create_time,last_update_time,old_supplier_id,old_id,service_status,status,max_user,bind_wx,host
+    </sql>
+
+    <select id="selectCsrsByCsrIDs" parameterType="java.util.List" resultMap="CsrMap">
+        select
+        <include refid="csr"/>
+        from seat
+        where id in
+        <if test="list != null and list.size() > 0">
+            <foreach collection="list" open="(" close=")" separator="," item="seatID">
+                #{seatID}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="selectOnlineCsrsByShopID" resultMap="CsrMap">
+        select
+        <include refid="csr"/>
+        from seat
+        where supplier_id = #{shopId} AND host=#{host} and status = 1
+    </select>
+
+    <select id="selectCsrsByCsrName" resultMap="CsrMap">
+        select
+        <include refid="csr"/>
+        from seat
+        where qunar_name = #{qunarName} AND host=#{host} and status = 1;
+    </select>
+
+    <select id="selectCsrByCsrNameAndShopId" resultMap="CsrMap">
+        select
+        <include refid="csr"/>
+        from seat
+        where qunar_name = #{qunarName} AND supplier_id = #{shopId} AND host=#{host} and status = 1;
+    </select>
+
+    <select id="selectCsrsByGroupIDs" resultMap="CsrMap">
+        select distinct seat.qunar_name, seat.id, seat.web_name, seat.nickname,seat.face_link, seat.supplier_id, seat.priority, seat.create_time, seat.last_update_time,seat.old_supplier_id, seat.old_id, seat.service_status, seat.status, seat.max_user,seat.bind_wx, seat.host
+        from seat,seat_group_mapping
+        where seat.id = seat_group_mapping.seat_id AND seat.host=#{host} AND seat.status = 1  and seat_group_mapping.group_id in
+        <if test="list != null and list.size() > 0">
+            <foreach collection="list" open="(" close=")" separator="," item="groupId">
+                #{groupId}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="selectCsrsByShopIdWithoutCarName" resultMap="CsrMap">
+        select
+        <include refid="csr"/>
+        from seat where supplier_id =#{shopId} and status=1 and qunar_name!=#{csrName} AND seat.host=#{host};
+    </select>
+
+    <select id="selectCsrsByCsrBusiIdAndHost" resultMap="CsrMap">
+        select
+        seat.id,seat.qunar_name,seat.web_name,seat.nickname,seat.face_link,seat.supplier_id,seat.priority,seat.create_time,seat.last_update_time,seat.status,seat.max_user,seat.bind_wx,seat.host
+        from hotline_seat_mapping hsm,seat
+        where seat.id=hsm.seat_id and seat.host=#{host} and seat.status =1 and hsm.busi_id=#{busiId} and hsm.status=1;
+    </select>
+
+    <insert id="saveSeat" parameterType="com.qunar.qchat.admin.model.Seat" useGeneratedKeys="true">
+        insert into seat(qunar_name,web_name,supplier_id,service_status,host)
+        values (#{qunarName},#{webName},#{supplierId},#{serviceStatus}, #{host})
+        <selectKey resultType="long" order="AFTER" keyProperty="id" >
+            SELECT currval('seat_id_seq')
+        </selectKey>
+    </insert>
+
+    <select id="selectCsrByCsrNameAndShopIdWithoutStatus" resultMap="CsrMap">
+        select
+        <include refid="csr"/>
+        from seat
+        where qunar_name = #{qunarName} AND supplier_id = #{shopId} AND host='ejabhost1';
+    </select>
+
+    <update id="updateSeatByShopId">
+        UPDATE seat set status=0 where supplier_id=#{shopId}
+    </update>
+
+    <update id="updateSeatStatusByShopIdAndName">
+        UPDATE seat set status=1 where supplier_id=#{shopId} and qunar_name=#{qunarName}
+    </update>
+</mapper>

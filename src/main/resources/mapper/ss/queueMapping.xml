@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qunar.qtalk.ss.consult.QueueMappingDao">
+
+    <resultMap id="queueMap" type="com.qunar.qtalk.ss.sift.entity.QueueMapping">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="customer_name" property="customerName" jdbcType="VARCHAR"/>
+        <result column="distributed_time" property="distributedTime" jdbcType="TIMESTAMP"/>
+        <result column="inqueue_time" property="inqueueTime" jdbcType="TIMESTAMP"/>
+        <result column="last_ack_time" property="lastAckTime" jdbcType="TIMESTAMP"/>
+        <result column="seat_name" property="seatName" jdbcType="VARCHAR"/>
+        <result column="session_id" property="sessionId" jdbcType="VARCHAR"/>
+        <result column="shop_id" property="shopId" jdbcType="INTEGER"/>
+        <result column="seat_id" property="seatId" jdbcType="INTEGER"/>
+        <result column="status" property="status" jdbcType="INTEGER"/>
+        <result column="request_count" property="requestCount" jdbcType="INTEGER"/>
+        <result column="product_id" property="productId" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <update id="updateByNameAndShopId">
+        UPDATE queue_mapping set last_ack_time = #{lastAckTime}, status = #{status} where customer_name = #{customerName} and  shop_id = #{shopId}
+    </update>
+
+    <update id="updateInServiceSeat">
+        update queue_mapping set seat_id = #{seatId}, seat_name = #{seatName}, distributed_time = now(), product_id= #{productId} where customer_name = #{customerName} and shop_id = #{shopId};
+    </update>
+
+
+    <select id="selectByCustomerNameAndShopId" resultMap="queueMap">
+        select * from queue_mapping where customer_name = #{customerName} and shop_id = #{shopId}  order by id desc limit 1
+    </select>
+
+    <select id="selectMappingByShopId" resultMap="queueMap">
+        select * from queue_mapping where seat_id=-1 and shop_id = #{shopId}  order by id desc
+    </select>
+</mapper>

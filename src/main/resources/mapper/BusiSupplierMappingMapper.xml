@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="BusiSupplierMapping">
+
+    <insert id="saveBusiSupplierMapping" parameterType="BusiSupplierMapping" useGeneratedKeys="true">
+        insert into busi_supplier_mapping(supplier_id, busi_id, busi_supplier_id, bsuid_and_type, status)
+        values (#{supplierId}, #{busiId}, #{busiSupplierId}, #{bSuIdAndType}, 1)
+        <selectKey resultType="long" order="AFTER" keyProperty="id" >
+            SELECT currval('busi_supplier_mapping_id_seq')
+        </selectKey>
+    </insert>
+
+    <select id="getBusiSupplierMappingBySuId" parameterType="long" resultType="com.qunar.qchat.admin.model.BusiSupplierMapping">
+        select busi_id as busiId, busi_supplier_id as busiSupplierId, supplier_id as supplierId
+        from busi_supplier_mapping
+        where supplier_id = #{suId} and status = 1;
+    </select>
+
+    <select id="getOperatorsBySeatQunarName" parameterType="String" resultType="com.qunar.qchat.admin.vo.third.SupplierOperatorInfo">
+        select DISTINCT (supplier_operator) as qunarName, operator_webname as webName, bsm.supplier_id as supplierId, bsm.busi_id as businessLinr,
+         bsm.busi_supplier_id as busiSupplierId from busi_supplier_mapping bsm LEFT JOIN seat on bsm.supplier_id=seat.supplier_id
+         where bsm.supplier_operator is not null and bsm.supplier_operator!='' and seat.qunar_name= #{seatQunarName} and bsm.status = 1;
+    </select>
+
+    <update id="saveSupplierOperator" parameterType="com.qunar.qchat.admin.vo.third.SupplierOperatorInfo" >
+        update busi_supplier_mapping set supplier_operator = #{qunarName}, operator_webname = #{webName}
+        where supplier_id = #{supplierId} and busi_id = #{businessLine} and busi_supplier_id = #{busiSupplierId}
+    </update>
+</mapper>

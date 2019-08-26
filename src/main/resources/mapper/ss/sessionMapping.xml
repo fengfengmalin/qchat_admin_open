@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qunar.qtalk.ss.sift.dao.SessionMappingDao">
+
+
+    <select id="selectYesterdaySessionCount" resultType="java.lang.Integer">
+        select count(*) from session_mapping where shop_id=#{shopId} and to_char(inqueue_time,'YYYY-MM-DD') =#{dateString};
+    </select>
+    <select id="selectYesterdayQueueCount" resultType="java.lang.Integer">
+        select count(*) from queue_mapping where shop_id=#{shopId} and to_char(inqueue_time,'YYYY-MM-DD') =#{dateString};
+    </select>
+</mapper>
+

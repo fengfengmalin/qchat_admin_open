@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="SessionLogMapping">
+
+    <insert id="insertSessionLog" parameterType="map">
+        insert into session_log (session_id, session_oldstat, session_newstat)
+        values (#{sessionid}, #{oldstat}, #{newstat})
+        ON CONFLICT DO NOTHING;
+    </insert>
+    
+</mapper>

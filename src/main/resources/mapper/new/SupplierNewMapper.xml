@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qunar.qchat.admin.dao.supplier.SupplierNewDao">
+
+    <select id="getAllSupplierInfo" resultType="com.qunar.qchat.admin.model.Supplier">
+        select supplier.id, supplier.name, bsm.busi_id as bType, business.name as busiName from supplier left join
+        busi_supplier_mapping bsm on supplier.id = bsm.supplier_id left join business on bsm.busi_id = business.id
+        where supplier.status = 1 and bsm.status = 1;
+    </select>
+
+    <select id="querySupplierIds" parameterType="list" resultType="java.lang.Long">
+        select supplier_id from busi_supplier_mapping where busi_id = #{busiId} and status = 1 and busi_supplier_id in
+        <foreach collection="busiSupplierIds" item="busiSupplierId" index="index" open="(" close=")" separator=",">
+            #{busiSupplierId}
+        </foreach>
+    </select>
+
+    <update id="deleteSuppliers" parameterType="list">
+        update busi_supplier_mapping set status = 0 where supplier_id in
+        <foreach collection="supplierIds" item="supplierId" index="index" open="(" close=")" separator=",">
+            #{supplierId}
+        </foreach>
+        ;
+        update supplier set status = 0 where id in
+        <foreach collection="supplierIds" item="supplierId" index="index" open="(" close=")" separator=",">
+            #{supplierId}
+        </foreach>
+        ;
+        update busi_seat_mapping set status = 0 where seat_id in (select id from seat where status = 1 and supplier_id in
+        <foreach collection="supplierIds" item="supplierId" index="index" open="(" close=")" separator=",">
+            #{supplierId}
+        </foreach>
+        );
+        update seat set status = 0 where supplier_id in
+        <foreach collection="supplierIds" item="supplierId" index="index" open="(" close=")" separator=",">
+            #{supplierId}
+        </foreach>
+        ;
+    </update>
+
+    <select id="filterOnlineSuppliers" parameterType="list" resultType="java.lang.Long">
+        select supplier.id from supplier left join busi_supplier_mapping bsm on supplier.id = bsm.supplier_id
+        where supplier.status = 1 and bsm.status = 1 and supplier.id in
+        <foreach collection="supplierIds" index="index" item="supplierId" open="(" close=")" separator=",">
+            #{supplierId}
+        </foreach>
+    </select>
+
+</mapper>

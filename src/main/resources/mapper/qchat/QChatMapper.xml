@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qunar.qchat.admin.dao.qchat.IQChatDao">
+
+    <sql id="loginDataColumn">
+        username as userName,
+        platform as platForm,
+        login_time as loginTime,
+        ip,
+        logout_at as logoutAt
+    </sql>
+
+    <!--<select id="queryLoginDataByQName" parameterType="map" resultType="com.qunar.qchat.admin.model.qchat.LoginData">-->
+        <!--select-->
+        <!--<include refid="loginDataColumn"/>-->
+        <!--from login_data-->
+        <!--where username = #{qunarName} and login_time between #{beginTime} and #{endTime};-->
+    <!--</select>-->
+
+</mapper>

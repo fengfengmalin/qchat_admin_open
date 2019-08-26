@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qunar.qtalk.ss.sift.dao.HotlineSupplierMappingDao">
+
+    <resultMap id="TagMap" type="com.qunar.qtalk.ss.sift.entity.HotlineSupplierMapping">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="hotline" property="hotline" jdbcType="VARCHAR"/>
+        <result column="supplier_id" property="supplierId" jdbcType="INTEGER"/>
+        <result column="status" property="status" jdbcType="INTEGER"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <insert id="insertHotlineSeat" parameterType="com.qunar.qtalk.ss.sift.entity.HotlineSupplierMapping"
+            useGeneratedKeys="true" keyProperty="id">
+        insert into hotline_supplier_mapping
+          (hotline, supplier_id)
+        values(#{hotline}, #{supplierId});
+    </insert>
+
+    <sql id="HotlineSeat">
+        id,hotline,supplier_id,status,create_time,update_time
+    </sql>
+
+    <update id="updateHotlineSeat">
+        update hotline_supplier_mapping set hotline=#{hotline}, update_time = now()  where id=#{id};
+    </update>
+
+    <update id="deleteById" parameterType="java.lang.Long">
+        update hotline_supplier_mapping set status=0, update_time = now() where id=#{id};
+    </update>
+
+    <select id="selectHotlineBySupplierId" resultType="java.lang.String">
+        select DISTINCT hsm.hotline
+        from hotline_supplier_mapping hsm,supplier where supplier.id=hsm.supplier_id and supplier.status=1 and hsm.supplier_id=#{supplierId} and hsm.status=1
+    </select>
+
+    <select id="selectHotlineByQunarNameAndHost" resultType="java.lang.String">
+        select DISTINCT hsm.hotline
+        from hotline_supplier_mapping hsm, seat
+        where seat.supplier_id=hsm.supplier_id and hsm.status=1 and seat.qunar_name=#{qunarName} and seat.host=#{host} and seat.status=1;
+    </select>
+</mapper>

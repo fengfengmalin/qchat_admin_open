@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="userSeatMapping">
+
+    <select id="getUserSeatMapping" parameterType="long" resultType="com.qunar.qchat.admin.model.UserSeatMapping">
+        SELECT
+        uname, sname
+        FROM user_seat_mapping
+        WHERE uname = #{uname}
+    </select>
+
+    <insert id="insertUserSeatMapping" parameterType="com.qunar.qchat.admin.model.UserSeatMapping">
+        INSERT INTO user_seat_mapping(uname, sname)
+        VALUES (#{uname},#{sname});
+    </insert>
+
+    <update id="updateUserSeatMapping" parameterType="com.qunar.qchat.admin.model.UserSeatMapping">
+        UPDATE user_seat_mapping
+        SET sname = #{sname}, last_update_time = CURRENT_TIMESTAMP
+        WHERE uname = #{uname}
+    </update>
+</mapper>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="seatSessionMapping">
+    <sql id="seatSession">
+            id,
+            seat_id AS seatId,
+            last_start_time AS lastStartTime
+    </sql>
+
+    <select id="querySeatSession" parameterType="long" resultType="com.qunar.qchat.admin.model.SeatSession">
+        SELECT
+        <include refid="seatSession"/>
+        FROM seat_session
+        WHERE seat_id = #{seatId}
+    </select>
+
+    <select id="querySeatSessionList" parameterType="list" resultType="com.qunar.qchat.admin.model.SeatSession">
+        SELECT
+        <include refid="seatSession"/>
+        FROM seat_session
+        WHERE
+        1=1
+        <if test="list != null and list.size() > 0">
+            AND seat_id IN
+            <foreach collection="list" item="seatId" open="(" close=")" separator=",">
+                #{seatId}
+            </foreach>
+        </if>
+    </select>
+
+    <insert id="insertSeatSession" parameterType="com.qunar.qchat.admin.model.SeatSession">
+        INSERT INTO seat_session(seat_id,last_start_time)
+        VALUES (#{seatId},#{lastStartTime});
+    </insert>
+
+    <update id="updateSeatSession" parameterType="com.qunar.qchat.admin.model.SeatSession">
+        UPDATE seat_session
+        SET last_start_time=#{lastStartTime}
+        WHERE seat_id=#{seatId}
+    </update>
+</mapper>

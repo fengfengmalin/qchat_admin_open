@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qunar.qtalk.ss.quickreply.dao.IQuickReplyDao">
+
+
+    <resultMap id="QuickReplyGroup" type="com.qunar.qtalk.ss.quickreply.entity.QuickReplyGroup">
+        <!-- 用result属性来映射非主键字段 -->
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="groupname" column="groupname" />
+        <result property="groupseq" column="groupseq" jdbcType="BIGINT" />
+        <result property="version" column="version" jdbcType="BIGINT"/>
+        <result property="isdel" column="isdel" jdbcType="INTEGER"/>
+        <result property="cgid" column="cgid" />
+    </resultMap>
+
+    <select id="getQuickReplyGroupList" resultMap="QuickReplyGroup" >
+        SELECT id, groupname, groupseq, version, isdel, cgid FROM quickreply_group
+        WHERE username = #{username} AND host = #{host} AND version > #{version}
+        ORDER BY update_time;
+    </select>
+
+    <resultMap id="QuickReplyContent" type="com.qunar.qtalk.ss.quickreply.entity.QuickReplyContent">
+        <!-- 用result属性来映射非主键字段 -->
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="groupid" column="groupid" />
+        <result property="content" column="content" />
+        <result property="contentseq" column="contentseq" jdbcType="BIGINT" />
+        <result property="version" column="version" jdbcType="BIGINT"/>
+        <result property="isdel" column="isdel" jdbcType="INTEGER"/>
+        <result property="cgid" column="cgid" />
+        <result property="ccid" column="ccid" />
+    </resultMap>
+
+    <select id="getQuickReplyContentList" resultMap="QuickReplyContent" >
+        SELECT id, groupid, content, contentseq, version, isdel, cgid, ccid FROM quickreply_content
+        WHERE username = #{username} AND host = #{host} AND version > #{version}
+        ORDER BY update_time;
+    </select>
+
+    <insert id="insertGroupQuickReply" parameterType="com.qunar.qtalk.ss.quickreply.entity.QuickReplyGroup"  useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO quickreply_group
+        (username, host, groupname, groupseq, version, cgid)
+        VALUES
+        (#{username}, #{host}, #{groupname}, ${groupseq}, ${version}, #{cgid})
+        ON CONFLICT (username, host, groupname)
+        DO UPDATE
+        SET version  = #{version},
+        groupname = EXCLUDED.groupname,
+        groupseq = EXCLUDED.groupseq RETURNING id;
+    </insert>
+
+    <insert id="insertContentQuickReply">
+        INSERT INTO quickreply_content
+        (username, host, groupid, content, contentseq, version, cgid, ccid,  update_time)
+        VALUES
+        <if test="list != null and list.size() > 0">
+            <foreach collection="list" item="item" index="index" separator=",">
+              <if test="item != null and item.content != null and item.ccid != null">
+                  (#{username}, #{host}, ${groupid}, #{item.content}, ${item.contentseq}, ${version}, #{cgid}, #{item.ccid}, now() + '${index}S')
+              </if>
+            </foreach>
+        </if>
+        ON CONFLICT (groupid, content)
+        DO UPDATE
+        SET version  = ${version},
+        content = EXCLUDED.content,
+        contentseq = EXCLUDED.contentseq;
+    </insert>
+
+    <update id="updateGroupQuickReply">
+        UPDATE quickreply_group
+        SET groupname  = #{groupname},
+        groupseq = #{groupseq},
+        version = #{groupver},
+        update_time = now()
+        WHERE
+        username = #{username} AND
+        host = #{host} AND
+        id = #{groupid};
+    </update>
+
+    <update id="updateContentQuickReply">
+        UPDATE quickreply_content
+        SET content = #{content},
+        contentseq = #{contentseq},
+        version = #{contentver},
+        update_time = now()
+        WHERE
+        username = #{username} AND
+        host = #{host} AND
+        id = #{contentid};
+    </update>
+
+
+    <delete id="deleteGroupQuickReply" parameterType="java.util.List">
+        UPDATE quickreply_group set isdel = 1, version = ${groupver} where id in
+        <if test="list != null and list.size() > 0">
+            <foreach collection="list" open="(" close=")" separator="," item="QuickReply">
+                ${QuickReply.groupid}
+            </foreach>
+        </if>
+    </delete>
+
+   <delete id="deleteContentQuickReplyByGroup" parameterType="java.util.List">
+        UPDATE quickreply_content set isdel = 1, version = ${contentver} where groupid in
+        <if test="list != null and list.size() > 0">
+            <foreach collection="list" open="(" close=")" separator="," item="QuickReply">
+                ${QuickReply.groupid}
+            </foreach>
+        </if>
+    </delete>
+
+    <delete id="deleteContentQuickReply" parameterType="java.util.List">
+        UPDATE quickreply_content set isdel = 1, version = ${contentver} where id in
+        <if test="list != null and list.size() > 0">
+            <foreach collection="list" open="(" close=")" separator="," item="QuickReply">
+                ${QuickReply.contentid}
+            </foreach>
+        </if>
+    </delete>
+
+    <select id="selectGroupMaxVersion" resultType="java.lang.Long">
+        SELECT COALESCE(MAX(version), 0) FROM quickreply_group
+        WHERE username = #{username} AND host = #{host};
+    </select>
+    <select id="selectContentMaxVersion" resultType="java.lang.Long">
+        SELECT COALESCE(MAX(version), 0) FROM quickreply_content
+        WHERE username = #{username} AND host = #{host};
+    </select>
+
+    <select id="selectGroupExits" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM quickreply_group
+        WHERE username = #{username} AND host = #{host} AND id = ${sgid};
+    </select>
+</mapper>

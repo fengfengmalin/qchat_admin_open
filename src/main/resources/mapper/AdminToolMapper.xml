@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AdminTool">
+
+    <select id="getSeatList" parameterType="String" resultType="com.qunar.qchat.admin.controller.admin.ASeatVO">
+        SELECT
+          s.id
+          ,s.qunar_name as qunarName
+          ,s.web_name as webName
+          ,s.supplier_id as supplierId
+          ,s.create_time as createTime
+          ,s.last_update_time as lastUpdateTime
+          ,s.service_status as serviceStatus
+          ,s.status as status
+          ,su.name as supplierName
+          ,bsm.busi_supplier_id as busiSupplierId
+          ,bsm.busi_id as bType
+        FROM seat s
+        LEFT JOIN supplier su on s.supplier_id = su.id
+        LEFT JOIN busi_supplier_mapping bsm on bsm.supplier_id = su.id
+        WHERE
+          lower(s.qunar_name) = #{qunarName} AND s.status=1
+        ORDER BY s.create_time desc
+    </select>
+
+    <select id="getSeatGroupList" parameterType="String" resultType="com.qunar.qchat.admin.controller.admin.ASeatGroupVO">
+        SELECT
+        s.id
+        ,s.qunar_name as qunarName
+        ,sg.id as groupId
+        ,sg.name as groupName
+        ,sg.strategy
+        FROM seat s
+        JOIN seat_group_mapping sgm on sgm.seat_id = s.id
+        JOIN seat_group sg on sg.id = sgm.group_id
+        WHERE
+          lower(s.qunar_name) = #{qunarName}
+        ORDER BY s.create_time desc
+    </select>
+
+    <select id="getGroupProductList" parameterType="String" resultType="com.qunar.qchat.admin.controller.admin.ASeatVO">
+        SELECT
+        group_id as groupId
+        ,pid
+        FROM group_product_mapping
+        WHERE
+          group_id = #{groupId}
+        ORDER BY create_time desc
+    </select>
+
+
+    <select id="getSeatByBusiSupplier" parameterType="String" resultType="com.qunar.qchat.admin.controller.admin.ASeatVO">
+        SELECT
+          s.id
+          ,s.qunar_name as qunarName
+          ,s.web_name as webName
+          ,s.supplier_id as supplierId
+          ,s.create_time as createTime
+          ,s.last_update_time as lastUpdateTime
+          ,s.service_status as serviceStatus
+          ,s.status as status
+          ,su.name as supplierName
+          ,bsm.busi_supplier_id as busiSupplierId
+          ,bsm.busi_id as bType
+        FROM seat s
+        LEFT JOIN supplier su on s.supplier_id = su.id
+        LEFT JOIN busi_supplier_mapping bsm on bsm.supplier_id = su.id
+        WHERE
+            <if test="busiSupplierId != null">
+              s.supplier_id in (select supplier_id from busi_supplier_mapping where busi_supplier_id = #{busiSupplierId})
+            </if>
+            <if test="supplierId != null">
+                s.supplier_id = #{supplierId}
+            </if>
+        ORDER BY s.create_time desc
+    </select>
+
+</mapper>

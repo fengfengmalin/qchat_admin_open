@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qunar.qtalk.ss.sift.dao.ShopDao">
+    <resultMap id="ShopMap" type="com.qunar.qtalk.ss.sift.entity.Shop">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="last_update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+        <result column="old_id" property="oldID" jdbcType="BIGINT"/>
+        <result column="logo_url" property="logoURL" jdbcType="VARCHAR"/>
+        <result column="welcomes" property="welcomes" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="INTEGER"/>
+        <result column="ext_flag" property="openQueueStatus" jdbcType="INTEGER"/>
+        <result column="assign_strategy" property="assignStrategy" jdbcType="INTEGER"/>
+        <result column="no_service_welcomes" property="noServiceWelcomes" jdbcType="VARCHAR"/>
+        <result column="hotline" property="hotline" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <select id="selectShopById" resultMap="ShopMap">
+        select * from supplier where id = #{shopID}
+    </select>
+
+    <select id="selectShopByBsiIdAndBusiSupplierId" resultMap="ShopMap">
+        SELECT
+        su.id,
+        su.name,
+        su.welcomes,
+        su.logo_url,
+        su.ext_flag,
+        sm.busi_id AS bType,
+        sm.busi_supplier_id as busiSupplierId,
+        su.create_time as createDate
+        FROM supplier su, busi_supplier_mapping sm
+        WHERE su.id = sm.supplier_id and su.status=1 and sm.status = 1 and sm.busi_id=#{busiId} and sm.busi_supplier_id=#{busiSupplierId}
+    </select>
+
+    <select id="selectBusiSupplierIds" resultType="java.lang.String">
+        select DISTINCT busi_supplier_mapping.busi_supplier_id
+        from supplier,busi_supplier_mapping
+        where supplier.id=busi_supplier_mapping.supplier_id and supplier.status=1
+        and busi_supplier_mapping.busi_id=#{busiId} and busi_supplier_mapping.status=1
+        and busi_supplier_mapping.busi_supplier_id in
+        <if test="list != null and list.size() > 0">
+            <foreach collection="list" open="(" close=")" separator="," item="busiSupplierId">
+                #{busiSupplierId}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="selectShopsByBusiIds" parameterType="java.util.List" resultType="java.lang.String">
+        SELECT array_agg(distinct su.id)
+        FROM supplier su, busi_supplier_mapping sm
+        WHERE su.id = sm.supplier_id and su.status=1 and sm.status = 1 and sm.busi_id in
+        <if test="list != null and list.size() > 0">
+            <foreach collection="list" open="(" close=")" separator="," item="busiId">
+                #{busiId}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="selectShopByBsiId" resultMap="ShopMap">
+        select DISTINCT supplier.id,hsm.hotline
+        from hotline_supplier_mapping hsm,supplier, busi_supplier_mapping bsm where bsm.supplier_id=supplier.id and supplier.id=hsm.supplier_id and supplier.status=1 and hsm.status=1 and bsm.busi_id=#{busiId}
+    </select>
+
+    <select id="selectShopIdByHotline" resultType="java.lang.Long">
+        select DISTINCT supplier.id
+        from hotline_supplier_mapping hsm,supplier where supplier.id=hsm.supplier_id and supplier.status=1 and hsm.hotline=#{hotline} and hsm.status=1
+    </select>
+
+    <select id="selectHotlineByShopId" resultType="java.lang.String">
+        select DISTINCT hsm.hotline
+        from hotline_supplier_mapping hsm,supplier where supplier.id=hsm.supplier_id and supplier.status=1 and supplier.id=#{shopId} and hsm.status=1
+    </select>
+
+    <select id="selectOtherShopIdsByIdAndQunarName" resultType="java.lang.Long">
+        select distinct supplier.id from seat s1,seat s2,supplier
+        where s1.qunar_name=s2.qunar_name and s2.status=1 and s2.supplier_id=#{supplierId}
+        and supplier.id!=#{supplierId} and s1.supplier_id=supplier.id and supplier.status=1;
+    </select>
+
+    <insert id="saveShop" useGeneratedKeys="true" parameterType="com.qunar.qtalk.ss.sift.entity.Shop">
+        insert into supplier(name, welcomes)
+        values (#{name}, #{welcomes})
+        <selectKey resultType="long" order="AFTER" keyProperty="id">
+            SELECT currval('supplier_id_seq')
+        </selectKey>
+    </insert>
+
+</mapper>

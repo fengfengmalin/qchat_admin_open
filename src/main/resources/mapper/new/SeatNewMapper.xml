@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qunar.qchat.admin.dao.seat.SeatNewDao">
+
+    <sql id="seatColumns">
+        seat.id,
+        seat.qunar_name as qunarName,
+        seat.web_name as webName,
+        seat.nickname as nickName,
+        seat.face_link as faceLink,
+        seat.supplier_id as supplierId
+    </sql>
+
+    <sql id="robotColumns">
+        id,
+        robot_id as robotId,
+        robot_name as robotName,
+        busi_id as businessId,
+        create_time as createTime,
+        update_time as updateTime,
+        operator,
+        imageurl,
+        status
+    </sql>
+
+    <select id="querySeatBySupplierId" resultType="com.qunar.qchat.admin.model.Seat">
+        select
+        <include refid="seatColumns"/>
+        from seat, busi_seat_mapping bsm where seat.id = bsm.seat_id and seat.supplier_id = #{supplierId} and seat.status = 1;
+    </select>
+
+    <select id="querySeatByQunarName" resultType="com.qunar.qchat.admin.model.Seat">
+        select
+        <include refid="seatColumns"/>
+        from seat,busi_seat_mapping bsm where seat.id = bsm.seat_id and lower(seat.qunar_name) = #{qunarName} and
+        seat.status = 1 and bsm.status = 1
+    </select>
+
+    <select id="getRobotByBusinessId" resultType="com.qunar.qchat.admin.model.Robot">
+        select
+        <include refid="robotColumns"/>
+        from robot_info where busi_id = #{businessId} and status =1 order by create_time desc limit 1;
+    </select>
+
+    <select id="getRobotByRobotid" resultType="com.qunar.qchat.admin.model.Robot">
+        select
+        <include refid="robotColumns"/>
+        from robot_info where robot_id = #{robotid} and status =1 order by create_time desc limit 1;
+    </select>
+
+    <select id="getRobotWithConfigById" resultType="com.qunar.qchat.admin.model.Robot">
+        select robot_info.id,
+        robot_info.robot_id as robotId,
+        robot_info.robot_name as robotName,
+        robot_info.busi_id as businessId,
+        robot_info.create_time as createTime,
+        robot_info.update_time as updateTime,
+        robot_info.operator,
+        robot_info.imageurl,
+        robot_info.status,
+        quc.display_type as displayType from robot_info left join
+        qchat_user_config quc on robot_info.robot_id = quc.user_id
+        where robot_info.status = 1 and robot_info.robot_id=#{robotid} order by robot_info.create_time desc limit 1;
+    </select>
+
+    <select id="getRobotById" resultType="com.qunar.qchat.admin.model.Robot">
+        select
+        <include refid="robotColumns"/>
+        from robot_info where robot_id = #{robot_id} and status =1 order by create_time desc limit 1;
+    </select>
+
+    <insert id="saveRobotInfo" parameterType="com.qunar.qchat.admin.model.Robot">
+        insert into robot_info (robot_id, robot_name, busi_id, create_time, update_time, status)
+        values (#{robotId}, #{robotName}, #{businessId}, now(), now(),1);
+    </insert>
+
+
+    <select id="qunarSupplierWithRobot" resultType="com.qunar.qchat.admin.model.SupplierWithRobot">
+        select supplier_id as id,
+                strategy,
+                welcome,
+                robot_id
+        from robot_supplier_mapping
+         where robot_id = #{robotname}
+                and supplier_id = #{supplierid}
+    </select>
+
+    <insert id="insertSupplierRobotConfig" parameterType="com.qunar.qchat.admin.model.SupplierWithRobot">
+        insert into robot_supplier_mapping (robot_id, supplier_id, strategy, welcome)
+        values (#{robot_id}, #{id}, #{strategy}, #{welcome});
+    </insert>
+    
+    <update id="updateSupplierRobotConfig" parameterType="com.qunar.qchat.admin.model.SupplierWithRobot">
+        UPDATE robot_supplier_mapping
+        SET strategy = #{strategy},welcome= #{welcome}
+        WHERE robot_id=#{robot_id} and supplier_id=#{id}
+    </update>
+
+</mapper>

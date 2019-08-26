@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qunar.qtalk.ss.sift.dao.SeatGroupDao">
+    <resultMap id="SeatGroupMap" type="com.qunar.qtalk.ss.sift.entity.SeatGroup">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="strategy" property="strategy" jdbcType="INTEGER"/>
+        <result column="supplier_id" property="shopID" jdbcType="INTEGER"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="last_update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+        <result column="old_supplier_id" property="oldSupplierID" jdbcType="INTEGER"/>
+        <result column="old_group_id" property="oldGroupID" jdbcType="INTEGER"/>
+        <result column="old_kefus" property="oldKefus" jdbcType="VARCHAR"/>
+        <result column="group_type" property="groupType" jdbcType="VARCHAR"/>
+        <result column="default_value" property="defaultValue" jdbcType="INTEGER"/>
+    </resultMap>
+    <select id="selectGroupListByShopIDAndProductID" resultMap="SeatGroupMap">
+        select
+        seat_group.id,
+        seat_group.name,
+        seat_group.strategy,
+        seat_group.supplier_id,
+        seat_group.create_time,
+        seat_group.last_update_time,
+        seat_group.old_supplier_id,
+        seat_group.old_group_id,
+        seat_group.old_kefus,
+        seat_group.group_type,
+        seat_group.default_value
+         from seat_group, group_product_mapping
+        where seat_group.supplier_Id = #{shopID}
+          and seat_group.id = group_product_mapping.group_id
+          and group_product_mapping.pid = #{productID}
+    </select>
+
+    <select id="selectDefaultGroupsByShopID" resultMap="SeatGroupMap">
+        select * from seat_group where supplier_id = #{shopID} and default_value = 1
+    </select>
+
+    <select id="selectSeatGroupIdByShopIdAndProductId" resultType="java.lang.Long">
+        select
+        seat_group.id
+        from seat_group, group_product_mapping
+        where seat_group.supplier_Id = #{shopId}
+        and seat_group.id = group_product_mapping.group_id
+        and group_product_mapping.pid = #{productId}
+    </select>
+
+    <select id="selectGroupIdByShopId" resultType="java.lang.Long">
+        select id from seat_group where supplier_id = #{shopId} and default_value = 1
+    </select>
+
+    <select id="selectShopIdByProductId" resultType="java.lang.Long">
+        select
+        DISTINCT seat_group.supplier_id
+        from seat_group, group_product_mapping
+        where seat_group.id = group_product_mapping.group_id
+        and group_product_mapping.pid = #{productId}
+    </select>
+</mapper>
+

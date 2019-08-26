@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qunar.qchat.admin.dao.welcomes.SupplierWelcomesDao">
+
+    <select id="getWelcomesBySupplierIds" parameterType="list" resultType="com.qunar.qchat.admin.model.Supplier">
+        select id,name,welcomes, no_service_welcomes AS noServiceWelcomes from supplier where id in
+        <foreach collection="supplierIds" item="supplierId" index="index" open="(" close=")" separator=",">
+            #{supplierId}
+        </foreach>
+    </select>
+
+    <update id="updateWelcomesBySupplierId">
+        <foreach collection="suppliers" item="supplier" index="index" separator=";">
+            update supplier
+            <set>
+                <if test="supplier.welcomes!=null and supplier.welcomes != ''">welcomes = #{supplier.welcomes},</if>
+                <if test="supplier.noServiceWelcomes!=null and supplier.noServiceWelcomes != ''">no_service_welcomes = #{supplier.noServiceWelcomes}</if>
+            </set>
+            where id = #{supplier.id};
+        </foreach>
+    </update>
+
+    <select id="queryWelcomesBySeatQName" resultType="java.lang.String">
+        select welcomes from supplier where id in (
+            select supplier_id from seat where qunar_name = #{seatQName} and status=1
+        ) limit 1;
+    </select>
+
+    <select id="queryWelcomesBySeatId" resultType="java.lang.String">
+        select welcomes from supplier where id in (
+            select supplier_id from seat where id = #{seatId}
+        ) limit 1;
+    </select>
+
+    <select id="queryWelcomesById" resultType="java.lang.String">
+        select welcomes from supplier where id = #{supplierId};
+    </select>
+
+</mapper>

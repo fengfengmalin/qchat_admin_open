@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="BusinessMapping">
+    <resultMap id="BusinessResultMap" type="com.qunar.qchat.admin.model.Business">
+        <result column="id" property="id" jdbcType="BIGINT"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+    </resultMap>
+    <select id="getIdByName" parameterType="map" resultType="int">
+          SELECT id from business where name = #{name}
+    </select>
+
+    <select id="getBusinessesBySupplierId" parameterType="long" resultType="com.qunar.qchat.admin.model.Business">
+        SELECT busi.id,busi.name
+        FROM business busi,busi_supplier_mapping bsm
+        WHERE bsm.supplier_id = #{supplierId} AND bsm.busi_id = busi.id
+    </select>
+
+    <select id="getBusiGroupMappingBySupplierId" parameterType="long" resultMap="BusinessResult">
+        SELECT busi.id,busi.name,bsm.supplier_id
+        FROM business busi,busi_supplier_mapping bsm
+        WHERE bsm.supplier_id = #{supplierId} AND bsm.busi_id = busi.id
+    </select>
+
+    <resultMap id="BusinessResult" type="com.qunar.qchat.admin.vo.BusinessVO">
+        <id column="id" property="id"/>
+        <result property="name" column="name" />
+        <collection property="groupList" ofType="com.qunar.qchat.admin.model.SeatGroup" javaType="ArrayList" column="{id=id,supplierId=supplier_id}" select="selectGroup" />
+    </resultMap>
+
+    <select id="selectGroup" parameterType="map" resultType="com.qunar.qchat.admin.model.SeatGroup">
+        SELECT sg.id, sg.name, sg.strategy, sg.supplier_id as supplierId
+        FROM seat_group sg,busi_seat_group_mapping bsgm
+        WHERE sg.id = bsgm.group_id AND bsgm.busi_id = #{id} AND sg.supplier_id = #{supplierId}
+    </select>
+
+    <select id="getAllBusiness" resultType="com.qunar.qchat.admin.model.Business">
+        select busi.id, busi.name
+        from business busi
+    </select>
+</mapper>

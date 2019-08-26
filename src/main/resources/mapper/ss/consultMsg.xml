@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qunar.qtalk.ss.session.dao.IConsultDao">
+
+    <insert id="insertConsultMsg" >
+        insert into consult_msg_history
+          (m_from,m_to,m_body,msg_id,from_host,to_host,create_time,msg_type,realfrom, realto, qchat_id)
+        values(#{m_from}, #{m_to},#{msg},#{msg_id},#{from_host},#{to_host},to_timestamp(#{time}),#{type},#{realfrom}, #{realto}, #{qchatId})
+        ON CONFLICT (msg_id) DO NOTHING;
+    </insert>
+
+    <resultMap id="MsgMap" type="com.qunar.qtalk.ss.session.dao.model.ConsultMsgInfo">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="m_from" property="F" jdbcType="VARCHAR"/>
+        <result column="from_host" property="FH" jdbcType="VARCHAR"/>
+        <result column="m_to" property="T" jdbcType="VARCHAR"/>
+        <result column="to_host" property="TH"  jdbcType="VARCHAR"/>
+        <result column="m_body" property="B" jdbcType="VARCHAR"/>
+        <result column="read_flag" property="R" jdbcType="VARCHAR"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <select id="selectHistoryMsgByCondition" resultMap="MsgMap">
+        select m_from,from_host,to_host,m_to,m_body,create_time,update_time,read_flag,realfrom, realto from consult_msg_history where
+        ((realfrom=#{realFrom} AND realto=#{realTo} and m_to=#{shopJid}) or
+        (realfrom=#{realTo} AND realto=#{realFrom} and m_from=#{shopJid}) ) and  create_time> now()-INTERVAL '1 D'
+        ORDER BY create_time limit #{limit};
+    </select>
+
+</mapper>

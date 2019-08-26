@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="LogOperateMapper">
+
+    <sql id="select_columns">
+        distinct content,
+        operate_type as operateType,
+        item_type as itemType,
+        item_id as itemId,
+        item_str as itemStr,
+        operator,
+        operate_time as operateTime
+
+    </sql>
+
+    <insert id="insertLog" parameterType="LogEntity">
+        insert into log_operation(operate_type, item_type, item_id, item_str, operator, operate_time, content)
+        values (#{operateType}, #{itemType}, #{itemId}, #{itemStr}, #{operator}, now(), #{content});
+    </insert>
+
+    <select id="queryLogs" parameterType="map" resultType="com.qunar.qchat.admin.model.LogEntity">
+        select
+        <include refid="select_columns"/>
+        from log_operation, seat
+        <where>
+            <if test="operateType != null">
+                and operate_type = #{operateType}
+            </if>
+            <if test="itemType != null">
+                and item_type = #{itemType}
+            </if>
+            <if test="itemId != null">
+                and item_id = #{itemId}
+            </if>
+            <if test="itemStr != null">
+                and item_str = #{itemStr}
+            </if>
+            and seat.qunar_name=log_operation.item_str
+            and seat.status=1
+        </where>
+        and content ~ '客服Id'
+        order by operate_time desc limit 50;
+    </select>
+
+</mapper>

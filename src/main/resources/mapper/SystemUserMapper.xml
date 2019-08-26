@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="SystemUserMapping">
+
+    <insert id="saveSystemUser" parameterType="SystemUser" useGeneratedKeys="true">
+        insert into sys_user(qunar_name, supplier_id, create_time)
+        values (#{qunarName}, #{supplierId}, CURRENT_TIMESTAMP)
+        <selectKey resultType="long" order="AFTER" keyProperty="id" >
+            SELECT currval('sys_user_id_seq')
+        </selectKey>
+    </insert>
+
+    <insert id="saveSystemUserList" parameterType="list" useGeneratedKeys="true">
+        insert into sys_user(qunar_name, supplier_id, create_time)
+        values
+        <if test="list != null and list.size() > 0">
+            <foreach collection="list" item="item" index="index" separator=",">
+                (#{item.qunarName}, #{item.supplierId}, CURRENT_TIMESTAMP)
+            </foreach>
+        </if>
+        <selectKey resultType="long" order="AFTER" keyProperty="id" >
+            SELECT currval('sys_user_id_seq')
+        </selectKey>
+    </insert>
+
+    <select id="getSystemUserByQunarName" parameterType="string" resultType="com.qunar.qchat.admin.model.SystemUser">
+        SELECT
+          id
+          , qunar_name AS qunarName
+          , supplier_id AS supplierId
+        FROM sys_user
+        WHERE qunar_name=#{qunarName}
+    </select>
+
+    <select id="getSystemUser" parameterType="map" resultType="com.qunar.qchat.admin.model.SystemUser">
+        SELECT id,
+        qunar_name AS qunarName,
+        supplier_id AS supplierId
+        FROM sys_user
+        WHERE qunar_name=#{qunarName} and supplier_id = #{supplierId}
+    </select>
+
+    <delete id="delSystemUserBySupplierId" parameterType="long">
+        DELETE FROM sys_user
+        WHERE supplier_id = #{supplierId}
+    </delete>
+
+    <delete id="delSystemUserBySupplierIds" parameterType="list">
+        delete from sys_user where supplier_id in
+        <foreach collection="list" item="item" index="index" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </delete>
+    <select id="delSystemUser" parameterType="map">
+        delete
+        FROM sys_user
+        WHERE qunar_name=#{qunarName} and supplier_id = #{supplierId}
+    </select>
+</mapper>

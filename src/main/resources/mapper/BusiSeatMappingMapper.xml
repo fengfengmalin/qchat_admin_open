@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="BusiSeatMapping">
+
+    <insert id="saveBusiSeatMapping" parameterType="BusiSeatMapping" useGeneratedKeys="true">
+        insert into busi_seat_mapping(seat_id, busi_id)
+        values (#{seatId}, #{busiId})
+        <selectKey resultType="long" order="AFTER" keyProperty="id" >
+            select currval('busi_seat_mapping_id_seq')
+        </selectKey>
+    </insert>
+
+    <delete id="delBusiSeatMapping" parameterType="long">
+        delete from busi_seat_mapping where seat_id = #{seatId}
+    </delete>
+</mapper>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qunar.qtalk.ss.session.dao.IGetMsgDao">
+
+
+
+    <select id="selectHistory"
+            resultType="com.qunar.qtalk.ss.session.dao.model.ConsultMsg">
+     select * from (
+        (SELECT
+        m_from,
+        realfrom,
+        m_to,
+        realto,
+        m_body,
+        create_time,
+        extract(epoch from date_trunc('US', create_time)),
+        read_flag
+        FROM msg_history
+        WHERE ((m_from=#{user}  and from_host = #{host}) or (m_to=#{user} and to_host = #{host}))  and create_time > to_timestamp(#{time})
+         ORDER by create_time asc  limit #{num})  union
+                (SELECT
+        m_from,
+        realfrom,
+        m_to,
+        realto,
+        m_body,
+        create_time,
+        extract(epoch from date_trunc('US', create_time)),
+        read_flag
+        FROM warn_msg_history
+        WHERE ((m_from=#{user}  and from_host = #{host}) or (m_to=#{user} and to_host = #{host}))  and create_time > to_timestamp(#{time})
+         ORDER by create_time asc limit #{num})
+        ) as a
+        ORDER by create_time asc limit #{num} ;
+    </select>
+
+
+
+    <select id="selectConsultMsgbyTime"
+            resultType="com.qunar.qtalk.ss.session.dao.model.ConsultMsg">
+        SELECT
+        m_from,
+        realfrom,
+        m_to,
+        realto,
+        m_body,
+        create_time,
+        extract(epoch from date_trunc('US', create_time)),
+        read_flag
+        FROM msg_history
+        WHERE ((m_from = #{from} and m_to = #{virtual} and
+                xpath('/message/@realto', m_body::xml)::text = #{real})
+                 or
+                (m_from = #{virtual} and m_to = #{from} and
+                xpath('/message/@realfrom', m_body::xml)::text =  #{real}))
+        and create_time ${direction} to_timestamp(#{time})
+        ORDER by create_time ${turn} limit #{num} ;
+    </select>
+
+</mapper>

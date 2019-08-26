@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qunar.qchat.admin.dao.seat.GroupNewDao">
+
+    <select id="queryGroupIdsBySupplierIds" parameterType="list" resultType="java.lang.Long">
+        select id from seat_group where supplier_id in
+        <foreach collection="supplierIds" item="supplierId" index="index" open="(" close=")" separator=",">
+            #{supplierId}
+        </foreach>
+    </select>
+
+    <delete id="deleteGroupBySupplierIds" parameterType="list" >
+        delete from busi_seat_group_mapping where group_id in
+        <foreach collection="groupIds" item="groupId" index="index" open="(" close=")" separator=",">
+            #{groupId}
+        </foreach>
+        ;
+        delete from seat_group_mapping where group_id in
+        <foreach collection="groupIds" item="groupId" index="index" open="(" close=")" separator=",">
+            #{groupId}
+        </foreach>
+        ;
+        delete from seat_group where id in
+        <foreach collection="groupIds" item="groupId" index="index" open="(" close=")" separator=",">
+            #{groupId}
+        </foreach>
+        ;
+        delete from group_product_mapping where group_id in
+        <foreach collection="groupIds" item="groupId" index="index" open="(" close=")" separator=",">
+            #{groupId}
+        </foreach>
+        ;
+    </delete>
+
+</mapper>

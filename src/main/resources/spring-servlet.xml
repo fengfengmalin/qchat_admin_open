@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/mvc
+	http://www.springframework.org/schema/mvc/spring-mvc.xsd http://www.springframework.org/schema/util
+	http://www.springframework.org/schema/util/spring-util.xsd
+	http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.1.xsd
+	">
+
+  	<context:annotation-config />
+    <!--<context:component-scan base-package="com.qunar.qtalk.ss" use-default-filters="false">-->
+        <!--<context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>-->
+    <!--</context:component-scan>-->
+    <context:component-scan base-package="com.qunar.qchat.admin" use-default-filters="false">
+        <context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+     <context:component-scan base-package="com.qunar.qtalk.ss" use-default-filters="false">
+        <context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+    <context:component-scan base-package="com.qunar.qchat.admin.aspect"/>
+
+    <!--<context:component-scan base-package="com.qunar.qtalk.ss.service"/>-->
+
+    <!-- 激活自动代理功能 -->
+    <aop:aspectj-autoproxy proxy-target-class="true"/>
+
+    <mvc:interceptors>
+        <mvc:interceptor>
+            <mvc:mapping path="/seat/**"/>
+            <mvc:mapping path="/group/**"/>
+            <mvc:mapping path="/busiSupplier/**"/>
+            <mvc:mapping path="/sys/**"/>
+            <mvc:mapping path="/template/**"/>
+            <mvc:mapping path="/session/**"/>
+            <mvc:mapping path="/dashboard/**"/>
+            <mvc:mapping path="/touch/dashboard/**"/>
+            <mvc:mapping path="/notice/**"/>
+            <mvc:exclude-mapping path="/notice/sayHello.json"/>
+            <mvc:exclude-mapping path="/seat/getSeatList.json"/>
+            <mvc:exclude-mapping path="/seat/transformCsr.json"/>
+            <bean class="com.qunar.qchat.admin.interceptor.LoginInterceptor"/>
+        </mvc:interceptor>
+       <!-- <mvc:interceptor>
+            <mvc:mapping path="/api/seat/upSeatSeStatus.qunar"/>
+            <bean class="com.qunar.qchat.admin.interceptor.SeatLoginInterceptor"/>
+        </mvc:interceptor>-->
+        <mvc:interceptor>
+            <mvc:mapping path="/busiSupplierEx/**"/>
+            <bean class="com.qunar.qchat.admin.interceptor.SupAdminLoginInterceptor"/>
+        </mvc:interceptor>
+
+
+        <bean class="com.qunar.qchat.admin.interceptor.CallbackInterceptor"/>
+        <bean class="com.qunar.qchat.admin.interceptor.UserAgentInterceptor"/>
+       <!-- <bean class="com.qunar.qchat.admin.interceptor.AccessControlInterceptor"/>-->
+    </mvc:interceptors>
+
+    <mvc:annotation-driven/>
+    <bean class="com.qunar.qchat.admin.interceptor.QMonitorHandlerExceptionResolver"/>
+
+    <!--  统一输出异常信息  -->
+    <util:list id="messageConverters">
+        <bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+            <property name="supportedMediaTypes">
+                <list>
+                    <value>application/json</value>
+                    <value>application/javascript</value>
+                    <value>text/json</value>
+                    <value>text/javascript</value>
+                </list>
+            </property>
+        </bean>
+    </util:list>
+
+    <bean id="handlerExceptionResolver" class="com.qunar.qchat.admin.interceptor.AnnotationHandlerMethodExceptionResolver">
+        <property name="defaultErrorView" value="error"/><!-- 错误页面 -->
+        <property name="messageConverters" ref="messageConverters"/> <!--标有@ResponseBody被此messageConverters输出-->
+    </bean>
+    <!--  统一输出异常信息  -->
+    
+	<bean id="velocityConfig" class="org.springframework.web.servlet.view.velocity.VelocityConfigurer">
+        <property name="resourceLoaderPath">
+            <value>refs/vm/</value>
+        </property>
+        <property name="velocityProperties">
+          <props>
+            <prop key="input.encoding">UTF-8</prop>
+            <prop key="output.encoding">UTF-8</prop>
+            <prop key="contentType">text/html;charset=UTF-8</prop>
+          </props>
+        </property>
+    </bean>
+    
+	<bean id="viewResolver" class="org.springframework.web.servlet.view.velocity.VelocityViewResolver">
+        <property name="viewClass">
+            <value>org.springframework.web.servlet.view.velocity.VelocityView</value>
+        </property>
+  		<property name="contentType" value="text/html;charset=UTF-8" />
+  		<property name="suffix" value=".vm" />
+  		
+  		<property name="dateToolAttribute" value="dateTool" />  
+        <property name="numberToolAttribute" value="numberTool" /> 
+  		<property name="requestContextAttribute" value="rc"/>
+		<property name="exposeRequestAttributes" value="true"/>
+		<property name="exposeSessionAttributes" value="true"/>
+    </bean>
+    
+</beans>

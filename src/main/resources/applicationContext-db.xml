@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/tx
+    http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <!--master-->
+    <bean id="masterDataSource" class="org.apache.commons.dbcp.BasicDataSource" scope="singleton">
+        <property name="driverClassName" value="org.postgresql.Driver"/>
+        <property name="url" value="${qcadmin.master.url}"/>
+        <property name="username" value="${qcadmin.master.user}"/>
+        <property name="password" value="${qcadmin.master.pwd}"/>
+    </bean>
+
+
+    <bean id="masterSqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="masterDataSource" />
+        <property name="mapperLocations" value="classpath:mapper/*.xml" />
+
+        <property name="typeAliasesPackage" value="com.qunar.qchat.admin.model" />
+    </bean>
+
+    <bean id="masterSqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+        <constructor-arg index="0" ref="masterSqlSessionFactory" />
+    </bean>
+
+    <bean id="masterTransactionManager" class="com.qunar.qchat.admin.tx.NotifyDumperDataSourceTransactionManager">
+        <property name="dataSource" ref="masterDataSource" />
+    </bean>
+
+    <tx:annotation-driven transaction-manager="masterTransactionManager" proxy-target-class="true"/>
+
+    <!--slaver-->
+    <bean id="slaverDataSource" class="org.apache.commons.dbcp.BasicDataSource" scope="singleton">
+        <property name="driverClassName" value="org.postgresql.Driver"/>
+        <property name="url" value="${qcadmin.slave.url}"/>
+        <property name="username" value="${qcadmin.slave.user}"/>
+        <property name="password" value="${qcadmin.slave.pwd}"/>
+    </bean>
+
+
+    <bean id="slaverSqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean" >
+        <property name="dataSource" ref="slaverDataSource" />
+        <property name="mapperLocations" value="classpath:mapper/*.xml" />
+
+        <property name="typeAliasesPackage" value="com.qunar.qchat.admin.model" />
+    </bean>
+
+    <bean id="slaverSqlSession" class="org.mybatis.spring.SqlSessionTemplate" >
+        <constructor-arg index="0" ref="slaverSqlSessionFactory" />
+    </bean>
+
+    <bean id="slaverTransactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="slaverDataSource" />
+    </bean>
+
+
+    <!-- qchat登陆数据源 -->
+
+    <!-- 动态数据源 -->
+    <bean id="dataSource" class="com.qunar.qchat.admin.common.datasource.DynamicDataSource">
+        <property name="targetDataSources">
+            <map key-type="java.lang.String">
+                <entry key="qcadmin-master" value-ref="masterDataSource"/>
+                <entry key="qcadmin-slave" value-ref="slaverDataSource"/>
+            </map>
+        </property>
+        <property name="defaultTargetDataSource" ref="masterDataSource"/>
+        <property name="lenientFallback" value="false"/>
+    </bean>
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean" primary="true">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+        <property name="mapperLocations">
+            <list>
+                <value>classpath*:mapper/msg/*.xml</value>
+                <value>classpath*:mapper/qchat/*.xml</value>
+                <value>classpath*:mapper/new/*.xml</value>
+                <value>classpath*:mapper/ss/*.xml</value>
+            </list>
+        </property>
+    </bean>
+    <bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate" primary="true">
+        <constructor-arg index="0" ref="sqlSessionFactory"/>
+    </bean>
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.qunar.qchat.admin"/>
+        <!--<property name="annotationClass" value="com.qunar.vacation.commons.web.util.Repository"/>-->
+    </bean>
+
+    <!-- 事物 -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+    <tx:annotation-driven transaction-manager="transactionManager" proxy-target-class="true" order="200"/>
+    <bean id="transactionTemplate" class="org.springframework.transaction.support.TransactionTemplate">
+        <property name="transactionManager" ref="transactionManager"/>
+    </bean>
+    <!-- 事物 -->
+    <!-- 动态数据源 -->
+
+    <!-- 设置Druid慢查询标准 -->
+    <bean id="stat-filter" class="com.alibaba.druid.filter.stat.StatFilter">
+        <property name="slowSqlMillis" value="3000"/>
+        <property name="logSlowSql" value="true"/>
+        <property name="mergeSql" value="false"/>
+    </bean>
+
+    <tx:annotation-driven transaction-manager="slaverTransactionManager" proxy-target-class="true"/>
+
+    <bean id="sqlSessionFactory2" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+        <property name="mapperLocations" value="classpath*:mapper/ss/*.xml"/>
+    </bean>
+
+    <bean id="mapperScannerConfigurer2" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.qunar.qtalk.ss"/>
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory2"/>
+        <property name="annotationClass" value="org.springframework.stereotype.Repository"/>
+    </bean>
+
+</beans>

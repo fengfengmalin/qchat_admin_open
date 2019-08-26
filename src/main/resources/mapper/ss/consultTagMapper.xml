@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qunar.qtalk.ss.consulttag.dao.IConsultTagDao">
+
+    <resultMap id="TagMap" type="com.qunar.qtalk.ss.consulttag.entity.ConsultTag">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="title" property="title" jdbcType="VARCHAR"/>
+        <result column="content" property="content" jdbcType="VARCHAR"/>
+        <result column="supplier_id" property="supplierId" jdbcType="INTEGER"/>
+        <result column="busi_supplier_id" property="busiSupplierId"  jdbcType="VARCHAR"/>
+        <result column="pid" property="pid" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="INTEGER"/>
+        <result column="consult_type" property="consultType" jdbcType="INTEGER"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+        <result column="busi_id" property="busiId" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <insert id="insertConsultTag" parameterType="com.qunar.qtalk.ss.consulttag.entity.ConsultTag"
+            useGeneratedKeys="true" keyProperty="id">
+        insert into consult_tag
+          (title, content, supplier_id, busi_supplier_id, pid, consult_type, busi_id)
+        values(#{title}, #{content}, #{supplierId}, #{busiSupplierId}, #{pid}, #{consultType}, #{busiId});
+    </insert>
+
+    <sql id="consultTag">
+        id,title,content,supplier_id,busi_supplier_id,pid,status,consult_type,create_time,update_time,busi_id
+    </sql>
+
+    <select id="selectBySupplierId" resultMap="TagMap">
+        select
+        <include refid="consultTag"/>
+        from consult_tag where supplier_id=#{supplierId} and status=1;
+    </select>
+
+</mapper>

@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="SupplierMapping">
+    <select id="getSupplierList" resultType="com.qunar.qchat.admin.model.Supplier">
+        select id, name, create_time as createDate from supplier where status = 1;
+	</select>
+
+    <insert id="saveSupplier" parameterType="com.qunar.qchat.admin.model.Supplier" useGeneratedKeys="true">
+        insert into supplier(name, status)
+        values (#{name}, 1)
+        <selectKey resultType="long" order="AFTER" keyProperty="id">
+            SELECT currval('supplier_id_seq')
+        </selectKey>
+    </insert>
+
+    <insert id="saveSupplierEx" parameterType="com.qunar.qchat.admin.model.Supplier" useGeneratedKeys="true">
+        insert into supplier(name, status,ext_flag)
+        values (#{name}, 1,#{bQueue})
+        <selectKey resultType="long" order="AFTER" keyProperty="id">
+            SELECT currval('supplier_id_seq')
+        </selectKey>
+    </insert>
+
+
+    <update id="updateSupplier" parameterType="com.qunar.qchat.admin.model.Supplier">
+        UPDATE supplier set name = #{name},last_update_time = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateFullSupplier" parameterType="com.qunar.qchat.admin.model.Supplier">
+        UPDATE supplier set name = #{name},status = #{status},ext_flag = #{bQueue},assign_strategy=#{assignStrategy}, last_update_time = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <select id="getSupplierByQunarName" parameterType="String" resultType="com.qunar.qchat.admin.model.Supplier">
+        SELECT s.id,s.name,bsm.busi_id AS bType, s.create_time as createDate FROM supplier s,sys_user su,busi_supplier_mapping bsm
+        WHERE s.id = su.supplier_id and s.id = bsm.supplier_id and su.qunar_name = #{qunarName}
+        and s.status = 1 and bsm.status = 1
+    </select>
+    <select id="getSupplierWithRobotByQunarName" parameterType="String" resultType="SupplierWithRobot">
+        SELECT s.id,s.name,s.assign_strategy AS assignStrategy, bsm.busi_id AS bType ,ri.robot_id,rsm.strategy,rsm.welcome, s.create_time As createDate,
+        s.ext_flag as bQueue, s.status
+        FROM supplier s left join sys_user su on s.id = su.supplier_id
+                        left join busi_supplier_mapping bsm on s.id = bsm.supplier_id
+                        left join robot_supplier_mapping as rsm on s.id = rsm.supplier_id
+                        left join robot_info as ri on ri.robot_id = rsm.robot_id
+        WHERE  su.qunar_name = #{qunarName}
+        and s.status = 1 and bsm.status = 1
+    </select>
+
+    <select id="getPageSupplierWithRobotByQunarName" parameterType="map" resultType="SupplierWithRobot">
+        SELECT s.id,s.name,s.assign_strategy AS assignStrategy, bsm.busi_id AS bType ,ri.robot_id,rsm.strategy,rsm.welcome, s.create_time As createDate,
+        s.ext_flag as bQueue, s.status
+        FROM supplier s left join sys_user su on s.id = su.supplier_id
+                        left join busi_supplier_mapping bsm on s.id = bsm.supplier_id
+                        left join robot_supplier_mapping as rsm on s.id = rsm.supplier_id
+                        left join robot_info as ri on ri.robot_id = rsm.robot_id
+        WHERE  su.qunar_name = #{qunarName}
+        and s.status = 1 and bsm.busi_id=#{businessId} and bsm.status = 1
+        ORDER BY s.id ASC
+        limit #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="getPageCountSupplier" parameterType="map" resultType="long">
+        SELECT count(1)
+        FROM supplier s left join sys_user su on s.id = su.supplier_id
+        left join busi_supplier_mapping bsm on s.id = bsm.supplier_id
+        left join robot_supplier_mapping as rsm on s.id = rsm.supplier_id
+        left join robot_info as ri on ri.robot_id = rsm.robot_id
+        WHERE  su.qunar_name = #{qunarName}
+        and s.status = 1 and bsm.busi_id=#{businessId} and bsm.status = 1
+    </select>
+
+
+    <select id="getSupplierBySeatQName" parameterType="String" resultType="com.qunar.qchat.admin.model.Supplier">
+        SELECT su.id, su.name, bsm.busi_id AS bType, sm.busi_supplier_id as busiSupplierId, su.create_time as createDate FROM supplier su, seat s, busi_seat_mapping bsm, busi_supplier_mapping sm
+        WHERE su.id = s.supplier_id and s.id = bsm.seat_id and sm.supplier_id = su.id and s.qunar_name = #{qName} and s.status = 1 and bsm.busi_id = #{bType}
+        and su.status = 1 and bsm.status = 1 and sm.status = 1
+    </select>
+
+    <select id="getSupplierByBusiSupplierId" parameterType="map" resultType="com.qunar.qchat.admin.model.Supplier">
+        SELECT s.id,s.name, s.create_time as createDate, bsm.busi_id as bType, s.ext_flag as bQueue, s.status FROM busi_supplier_mapping bsm,supplier s
+        WHERE bsm.busi_supplier_id = #{busiSupplierId} and bsm.busi_id = #{busiType} and s.id = bsm.supplier_id and bsm.status = 1 and s.status = 1
+    </select>
+
+    <select id="getSupplierByBusiSupplierIdEx" parameterType="map" resultType="com.qunar.qchat.admin.model.Supplier">
+        SELECT s.id,s.name,s.ext_flag as bQueue,s.logo_url as logoUrl,s.welcomes ,s.status, s.create_time as createDate FROM busi_supplier_mapping bsm,supplier s
+        WHERE bsm.supplier_id = #{busiSupplierId} and bsm.busi_id = #{busiType} and s.id = bsm.supplier_id
+    </select>
+
+    <select id="getSuGroupList" parameterType="map" resultMap="SuGroupResult">
+        SELECT id, name
+        FROM supplier
+        WHERE status = 1 and
+        <if test="suIdList != null and suIdList.size > 0">
+            id in
+            <foreach collection="suIdList" separator="," open="(" close=")" item="suId">
+                #{suId}
+            </foreach>
+        </if>
+    </select>
+
+    <resultMap id="SuGroupResult" type="com.qunar.qchat.admin.vo.SupplierGroupVO">
+        <id column="id" property="suId"/>
+        <result property="suName" column="name"/>
+        <collection property="groupList" ofType="com.qunar.qchat.admin.model.SeatGroup" javaType="ArrayList"
+                    column="{supplierId=id}" select="selectGroup"/>
+    </resultMap>
+
+    <select id="selectGroup" parameterType="map" resultType="com.qunar.qchat.admin.model.SeatGroup">
+        SELECT sg.id, sg.name, sg.strategy, sg.supplier_id as supplierId
+        FROM seat_group sg
+        where sg.supplier_id = #{supplierId}
+    </select>
+
+    <select id="getSupplierByIds" parameterType="list" resultType="com.qunar.qchat.admin.model.Supplier">
+        select
+        supplier.id as id,
+        supplier.name as name,
+        bsm.busi_id as bType,
+        bsm.busi_supplier_id as busiSupplierId,
+        supplier.logo_url as logoUrl,
+        supplier.create_time as createDate
+        from supplier LEFT JOIN busi_supplier_mapping bsm on supplier.id=bsm.supplier_id
+        where supplier.status = 1 and bsm.status = 1 and supplier.id in
+        <foreach collection="ids" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+
+    <update id="saveSupplierInfo" parameterType="map">
+        <if test="supplierInfo.hasSupplierCol">
+            update supplier set
+            <foreach collection="supplierInfo.supplierCols.keys" index="index" item="key" separator=",">
+                ${key} = #{supplierInfo.supplierCols[${key}]}
+            </foreach>
+            where id in (
+            select supplier_id from busi_supplier_mapping where busi_id = #{supplierInfo.business} and
+            busi_supplier_id = #{supplierInfo.busiSupplierId}
+            );
+        </if>
+        <if test="supplierInfo.hasBsumCol">
+            update busi_supplier_mapping set
+            <foreach collection="supplierInfo.bsumCols.keys" index="index" item="key" separator=",">
+                ${key} = #{supplierInfo.bsumCols[${key}]}
+            </foreach>
+            where busi_id = #{supplierInfo.business} and busi_supplier_id = #{supplierInfo.busiSupplierId};
+        </if>
+    </update>
+
+    <select id="getAllSupplierBySeatQName" parameterType="map" resultType="com.qunar.qchat.admin.model.Supplier">
+        SELECT su.id, su.name, bsm.busi_id AS bType, sm.busi_supplier_id as busiSupplierId, su.create_time as createDate FROM supplier su, seat s, busi_seat_mapping bsm, busi_supplier_mapping sm
+        WHERE su.id = s.supplier_id and s.id = bsm.seat_id and sm.supplier_id = su.id and s.qunar_name = #{qName} and s.status = 1
+        and su.status = 1 and bsm.status = 1 and sm.status = 1;
+    </select>
+
+    <select id="getSupplier" parameterType="map" resultType="com.qunar.qchat.admin.model.Supplier">
+        SELECT
+        su.id,
+        su.name,
+        su.welcomes,
+        su.logo_url AS logoUrl,
+        su.ext_flag AS bQueue,
+        sm.busi_id AS bType,
+        sm.busi_supplier_id as busiSupplierId,
+        su.create_time as createDate
+        FROM supplier su, busi_supplier_mapping sm
+        WHERE su.id = sm.supplier_id and su.status=1 and sm.status = 1 and ((sm.busi_id=#{busi} and sm.busi_supplier_id=#{busisupplier}) or sm.supplier_id=#{supplier});
+    </select>
+</mapper>

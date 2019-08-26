@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qunar.qchat.admin.dao.msg.IMsgDao">
+
+    <select id="getLastSeatNameWithShopIdEx" parameterType="String" resultType="String">
+        select ( case msg_type when 'consult' then split_part(realfrom,'@',1) else m_from end) as m_from
+        from consult_msg_history
+        where m_to = #{uname}
+        and m_from in
+        <foreach collection="virturalids" item="virturalid" index="index" separator="," open="(" close=")">
+            #{virturalid}
+        </foreach>
+        and (case msg_type when 'consult' then split_part(realfrom,'@',1) else m_from end) in
+        <foreach collection="snames" item="sname" index="index" separator="," open="(" close=")">
+            #{sname}
+        </foreach>
+        order by create_time desc limit 1;
+    </select>
+
+    <select id="getLastSeatNameWithShopIdBefore" parameterType="String" resultType="String">
+        select ( case msg_type when 'consult' then split_part(realfrom,'@',1) else m_from end) as m_from
+        from consult_msg_history
+        where m_to = #{uname}
+        and m_from in
+        <foreach collection="virturalids" item="virturalid" index="index" separator="," open="(" close=")">
+            #{virturalid}
+        </foreach>
+        and (case msg_type when 'consult' then split_part(realfrom,'@',1) else m_from end) in
+        <foreach collection="snames" item="sname" index="index" separator="," open="(" close=")">
+            #{sname}
+        </foreach>
+        and create_time >= (now() - interval '${interval} minutes')
+        order by create_time desc limit 1;
+    </select>
+
+    <select id="getLestConversationTime" resultType="hashmap">
+        select round(EXTRACT(EPOCH FROM max(create_time))*1000) as time,m_from, case msg_type when 'consult' then split_part(realto,'@',1) else m_to end as m_to
+        from consult_msg_history
+        where m_from = #{uname}
+        and (case msg_type when 'consult' then split_part(realto,'@',1) else m_to end)  in
+        <foreach collection="snames" item="sname" index="index" separator="," open="(" close=")">
+            #{sname}
+        </foreach>
+        group by m_from,m_to,msg_type,realto;
+    </select>
+
+
+</mapper>

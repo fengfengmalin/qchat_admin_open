@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qunar.qtalk.ss.sift.dao.BusiShopMappingDao">
+    <resultMap id="BusiShopMappingMap" type="com.qunar.qtalk.ss.sift.entity.BusiShopMapping">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="supplier_id" property="shopID" jdbcType="INTEGER"/>
+        <result column="busi_id" property="busiID" jdbcType="INTEGER" />
+        <result column="busi_supplier_id" property="busiSupplierID" jdbcType="VARCHAR"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="last_update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+        <result column="bsuid_and_type" property="bsuIDType" jdbcType="VARCHAR"/>
+        <result column="supplier_operator" property="supplierOperator" jdbcType="VARCHAR"/>
+        <result column="operator_webname" property="operatorWebname" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <select id="queryBusiShopMappingByShopID" resultMap="BusiShopMappingMap">
+        select * from busi_supplier_mapping where supplier_id = #{shopID}
+    </select>
+
+    <select id="queryBusiShopMappingByBusiShopIDAndBusiID" resultMap="BusiShopMappingMap">
+        select * from busi_supplier_mapping where busi_id = #{busiID} and busi_supplier_id = #{busiSupplierID} and status = 1
+    </select>
+
+    <insert id="saveBusiShopMapping" parameterType="com.qunar.qtalk.ss.sift.entity.BusiShopMapping" useGeneratedKeys="true">
+        insert into busi_supplier_mapping(supplier_id, busi_id)
+        values (#{shopID}, #{busiID})
+        <selectKey resultType="long" order="AFTER" keyProperty="id" >
+            SELECT currval('busi_supplier_mapping_id_seq')
+        </selectKey>
+    </insert>
+</mapper>
+
