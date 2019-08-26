@@ -3,28 +3,41 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:context="http://www.springframework.org/schema/context"
        xmlns:aop="http://www.springframework.org/schema/aop"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans
-        http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context
-        http://www.springframework.org/schema/context/spring-context.xsd
-        http://www.springframework.org/schema/aop
-        http://www.springframework.org/schema/aop/spring-aop.xsd
-        http://www.springframework.org/schema/aop
-	    http://www.springframework.org/schema/aop/spring-aop.xsd">
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+         http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop-3.1.xsd
+         ">
 
-    <context:annotation-config/>
+    <context:annotation-config />
+    <context:component-scan base-package="com.qunar.qchat.admin,com.qunar.qtalk.ss">
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+
+    <!--<context:component-scan base-package="com.qunar.qtalk.ss">-->
+        <!--<context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>-->
+    <!--</context:component-scan>-->
+
 
     <aop:aspectj-autoproxy proxy-target-class="true"/>
 
-    <import resource="context-datasource.xml"/>
+    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="locations">
+            <list>
+                <value>classpath:qchatadmin.properties</value>
+                <value>classpath:jdbc.properties</value>
+                <value>classpath*:redis.properties</value>
+            </list>
+        </property>
+        <property name="ignoreUnresolvablePlaceholders" value="true"/>
+    </bean>
+
+    <bean id="applicationContextHelper" class="com.qunar.qchat.admin.common.ApplicationContextHelper" lazy-init="false"/>
+
+    <import resource="applicationContext-db.xml"/>
     <import resource="context-redis.xml"/>
 
 
-    <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
-        <property name="ignoreUnresolvablePlaceholders" value="true"/>
-        <property name="locations">
-            <list>
-                <value>classpath*:admin.properties</value>
-            </list>
-        </property>
-    </bean>
+    <!--<import resource="redis-config.xml"/>-->
+
 </beans>

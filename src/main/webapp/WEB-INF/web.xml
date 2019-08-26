@@ -5,32 +5,16 @@
          id="auto-index-web" version="3.0">
     <display-name>qchat_admin_open</display-name>
 
-    <servlet>
-        <servlet-name>dispatcherServlet</servlet-name>
-        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
-        <init-param>
-            <param-name>contextConfigLocation</param-name>
-            <param-value>classpath:spring_servlet.xml</param-value>
-        </init-param>
-        <load-on-startup>1</load-on-startup>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>dispatcherServlet</servlet-name>
-        <url-pattern>/file/*</url-pattern>
-        <url-pattern>*.do</url-pattern>
-        <url-pattern>*.qunar</url-pattern>
-    </servlet-mapping>
-    <listener>
-        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
-    </listener>
+    <welcome-file-list>
+        <welcome-file>welcome.html</welcome-file>
+    </welcome-file-list>
 
-    <context-param>
-        <param-name>contextConfigLocation</param-name>
-        <param-value>
-            classpath:applicationContext.xml
-        </param-value>
-    </context-param>
 
+    <!--###########注意, 此段listener和filter直接放置在web.xml顶端########-->
+    <!--###########连这段注释一起放, 避免其他同学copy时忽略此信息#########-->
+
+
+    <!--因为ServletWatcher里调用了getParameter，请将下面的filter放置在ServletWatcher之前-->
     <filter>
         <filter-name>encodingFilter</filter-name>
         <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
@@ -49,4 +33,61 @@
         <url-pattern>/*</url-pattern>
     </filter-mapping>
 
+
+    <!--############注意, 此段listener和filter直接放置在web.xml顶端########-->
+
+    <servlet>
+        <servlet-name>dispatcherServlet</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <init-param>
+            <param-name>contextConfigLocation</param-name>
+            <param-value>classpath:spring-servlet.xml</param-value>
+        </init-param>
+        <init-param>
+            <param-name>detectAllHandlerExceptionResolvers</param-name><!-- 取消其自动注册的异常解析器 -->
+            <param-value>false</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>dispatcherServlet</servlet-name>
+        <url-pattern>*.do</url-pattern>
+        <url-pattern>*.qunar</url-pattern>
+        <url-pattern>*.json</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>css</servlet-name>
+        <servlet-class>com.qunar.qtalk.ss.css.web.CssServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>css</servlet-name>
+        <url-pattern>/css/*</url-pattern>
+    </servlet-mapping>
+
+    <listener>
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+
+    <context-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>
+            classpath:applicationContext.xml
+        </param-value>
+    </context-param>
+
+    <!-- 错误界面配置 -->
+    <!--<error-page>-->
+    <!--<error-code>400</error-code>-->
+    <!--<location>/error.do</location>-->
+    <!--</error-page>-->
+    <!--<error-page>-->
+    <!--<error-code>404</error-code>-->
+    <!--<location>/error.do</location>-->
+    <!--</error-page>-->
+    <!--<error-page>-->
+    <!--<error-code>500</error-code>-->
+    <!--<location>/error.do</location>-->
+    <!--</error-page>-->
 </web-app>
